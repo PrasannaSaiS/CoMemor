@@ -125,7 +125,7 @@ Add to your project's `.agents/mcp_config.json` (or global `~/.gemini/antigravit
   "mcpServers": {
     "agent-memory": {
       "command": "node",
-      "args": ["c:/Users/prasa/Projects/agent-memory-mcp/agent-memory-mcp/dist/server.js"],
+      "args": ["/path/to/agent-memory-mcp/dist/server.js"],
       "env": {
         "AGENT_MEMORY_DIR": "${workspaceFolder}/.agent-memory",
         "AGENT_MEMORY_REPO": "${workspaceFolderBasename}"
