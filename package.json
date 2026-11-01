@@ -1,27 +1,43 @@
 {
   "name": "comemor",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "CoMemor — repository-scoped AI agent memory MCP server. Records errors and fixes, redacts secrets, and surfaces relevant context to your AI coding tools. Targets MCP specification 2026-07-28.",
-  "type": "module",
-  "license": "MIT",
-  "author": "Prasanna Sai",
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "ai-agent",
+    "memory",
+    "antigravity",
+    "cursor",
+    "claude",
+    "error-fix",
+    "agentic-development"
+  ],
+  "homepage": "https://github.com/PrasannaSaiS/CoMemor#readme",
+  "bugs": {
+    "url": "https://github.com/PrasannaSaiS/CoMemor/issues"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/PrasannaSaiS/CoMemor.git"
   },
-  "bugs": {
-    "url": "https://github.com/PrasannaSaiS/CoMemor/issues"
-  },
-  "homepage": "https://github.com/PrasannaSaiS/CoMemor#readme",
-  "engines": {
-    "node": ">=22.5.0"
-  },
+  "license": "MIT",
+  "author": "Prasanna Sai",
+  "type": "module",
   "main": "dist/server.js",
+  "types": "./dist/server.d.ts",
   "bin": {
-    "comemor": "./dist/server.js"
+    "comemor": "dist/server.js",
+    "comemor-dashboard": "dashboard/bridge/dist/bundle.cjs"
+  },
+  "directories": {
+    "doc": "docs",
+    "test": "tests"
   },
   "files": [
     "dist",
+    "dashboard/bridge/dist",
+    "dashboard/frontend/dist",
     "README.md",
     "LICENSE",
     "CHANGELOG.md"
@@ -45,7 +61,10 @@
     "benchmark": "npm run build && node --experimental-vm-modules --input-type=module -e \"import('./dist-benchmark/scripts/benchmark/harness.js')\"",
     "benchmark:build": "tsc -p tsconfig.benchmark.json",
     "benchmark:run": "npx tsx scripts/benchmark/harness.ts",
-    "check": "npm run typecheck && npm run lint && npm run format:check && npm run test"
+    "check": "npm run typecheck && npm run lint && npm run format:check && npm run test",
+    "build:dashboard:bridge": "node scripts/bundle-bridge.mjs",
+    "build:dashboard:frontend": "npm --prefix dashboard/frontend run build",
+    "build:all": "npm run build && npm run build:dashboard:bridge && npm run build:dashboard:frontend"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.17.0",
@@ -67,15 +86,7 @@
     "typescript": "5.8.3",
     "vitest": "3.2.4"
   },
-  "keywords": [
-    "mcp",
-    "model-context-protocol",
-    "ai-agent",
-    "memory",
-    "antigravity",
-    "cursor",
-    "claude",
-    "error-fix",
-    "agentic-development"
-  ]
+  "engines": {
+    "node": ">=22.5.0"
+  }
 }
