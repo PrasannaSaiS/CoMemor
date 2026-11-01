@@ -105,6 +105,11 @@ function IconCheck(): ReactNode {
 
 /* ── Stage Specifications for the Deep-Dive Inspector ────────────── */
 
+interface RuleItem {
+  name: string;
+  pattern: string;
+}
+
 interface StageDetail {
   id: string;
   stageName: string;
@@ -113,7 +118,8 @@ interface StageDetail {
   layerBadge: string;
   statusBadge: string;
   description: string;
-  rules: string[];
+  rulesHeading: string;
+  rules: RuleItem[];
 }
 
 const STAGES: StageDetail[] = [
@@ -125,13 +131,14 @@ const STAGES: StageDetail[] = [
     layerBadge: 'Layer: Stdio Transport',
     statusBadge: 'ACTIVE',
     description:
-      'Synchronous interception of all CLI stderr and stdout outputs at the MCP protocol boundary over loopback (127.0.0.1:4321). Zero raw output touches disk or SQLite prior to sanitization.',
+      'Synchronous standard stream interceptor executing at the MCP protocol boundary over loopback (127.0.0.1:4321). Ensures raw command stdout and stderr traces are quarantined and analyzed before touching disk or the persistent SQLite database.',
+    rulesHeading: 'Transport Guards & Invariants',
     rules: [
-      'Loopback Interface (127.0.0.1:4321)',
-      'Stdio Protocol Interceptor',
-      'Zero Plaintext Disk Leak Invariant',
-      'Pre-Hash Fingerprint Quarantine',
-      'Synchronous Pipeline Execution',
+      { name: 'Loopback RPC Boundary', pattern: '127.0.0.1:4321' },
+      { name: 'Stdio Protocol Interceptor', pattern: 'stdout & stderr' },
+      { name: 'Zero Plaintext Disk Leak Invariant', pattern: 'in-memory only' },
+      { name: 'Pre-Hash Fingerprint Gate', pattern: 'sha256:pre-write' },
+      { name: 'Synchronous Pipeline Execution', pattern: 'blocking RPC' },
     ],
   },
   {
@@ -142,15 +149,16 @@ const STAGES: StageDetail[] = [
     layerBadge: 'Layer: 100% Recall Regex',
     statusBadge: 'ACTIVE',
     description:
-      'High-precision regular expressions targeting credential prefixes, authorization headers, and format signatures with 100% historical test recall:',
+      'High-precision regular expressions targeting credential prefixes, authorization headers, and format signatures with 100% historical test recall. Sanitizes all matching substrings into cryptographic placeholders before memory persistence:',
+    rulesHeading: 'Active Signatures & Detection Patterns',
     rules: [
-      'GitHub PAT (ghp_*)',
-      'AWS Access Key (AKIA*)',
-      'OpenAI Secret (sk-*)',
-      'Anthropic Secret (sk-ant-*)',
-      'Bearer JWT Tokens',
-      'PEM Private Keys',
-      'Database URIs',
+      { name: 'GitHub Personal Access Token', pattern: 'ghp_*' },
+      { name: 'AWS Access Key ID', pattern: 'AKIA*' },
+      { name: 'OpenAI Secret Key', pattern: 'sk-*' },
+      { name: 'Anthropic Secret Key', pattern: 'sk-ant-*' },
+      { name: 'Bearer JWT Authentication', pattern: 'RFC 6750' },
+      { name: 'PEM Private Cryptographic Keys', pattern: 'BEGIN PRIVATE KEY' },
+      { name: 'Database Connection URIs', pattern: 'protocol://user:pass' },
     ],
   },
   {
@@ -161,13 +169,14 @@ const STAGES: StageDetail[] = [
     layerBadge: 'Layer: Statistical Entropy',
     statusBadge: 'ACTIVE',
     description:
-      'Calculates character distribution entropy H = -∑ p_i log₂(p_i) on strings ≥ 24 characters. Tokens exceeding 4.5 bits/char are sanitized to prevent secret leaks in non-standard formats:',
+      'Calculates Shannon character distribution entropy H = -∑ p_i log₂(p_i) on contiguous tokens of 24+ characters. Automatically suppresses non-standard, custom-generated, or encrypted tokens exceeding 4.5 bits/char:',
+    rulesHeading: 'Statistical Thresholds & Bounds',
     rules: [
-      'Shannon Uniform Estimator',
-      'Entropy Threshold: H > 4.5 bits/char',
-      'Min Token Length: ≥ 24 Characters',
-      'Base64 / Hex Hash Sanitization',
-      'Pre-Hash Fingerprint Gate',
+      { name: 'Shannon Uniform Estimator', pattern: 'H = -∑ p_i log₂(p_i)' },
+      { name: 'Entropy Sensitivity Threshold', pattern: 'H > 4.5 bits/char' },
+      { name: 'Minimum Contiguous Token Length', pattern: '≥ 24 characters' },
+      { name: 'Base64 / Hex Hash Sanitization', pattern: 'radix-aware' },
+      { name: 'Pre-Persistence Substitution', pattern: '[REDACTED_ENTROPY]' },
     ],
   },
   {
@@ -178,15 +187,16 @@ const STAGES: StageDetail[] = [
     layerBadge: 'Layer: Adversarial Defense',
     statusBadge: 'ACTIVE',
     description:
-      'Heuristic detection layers inspect memory records for indirect prompt injection, instruction overrides, and malicious shell commands before storage:',
+      'Heuristic detection layers inspect memory records for indirect prompt injection, instruction overrides, and malicious system evasion techniques prior to storage:',
+    rulesHeading: 'Adversarial Detection Vectors',
     rules: [
-      'Imperative Injections ("ignore previous instructions", "act as")',
-      'Fake System Markers ([INST], <<SYS>>, <|im_start|>)',
-      'Data Exfiltration (curl -X POST, webhook commands)',
-      'Nested / Base64 Injections (quoted decode wrappers)',
-      'Zero-Width Characters (U+200B, soft hyphen evasion)',
-      'Unicode Homoglyphs (Cyrillic/Greek confusables)',
-      'Imperative Verb Density (> 8% verbs over 20+ words)',
+      { name: 'Imperative Instruction Injection', pattern: '"ignore previous instructions"' },
+      { name: 'Fake System Boundary Markers', pattern: '[INST], <<SYS>>, <|im_start|>' },
+      { name: 'Out-of-Band Data Exfiltration', pattern: 'curl -X POST, webhook' },
+      { name: 'Nested Obfuscation Wrappers', pattern: 'atob(...) decode' },
+      { name: 'Zero-Width Character Evasion', pattern: 'U+200B, soft hyphen' },
+      { name: 'Unicode Homoglyph Spoofing', pattern: 'Cyrillic confusables' },
+      { name: 'Imperative Verb Density Spike', pattern: '> 8% verbs (20+ words)' },
     ],
   },
   {
@@ -198,13 +208,14 @@ const STAGES: StageDetail[] = [
     statusBadge: 'ACTIVE',
     description:
       'Dual-path persistence routing. Clean records are indexed into SQLite FTS5 for default retrieval, while flagged records are isolated in the Quarantine Vault:',
+    rulesHeading: 'Persistence Routing & Guarantees',
     rules: [
-      'Clean Route: Rebuildable SQLite FTS5 Index',
-      'Clean Route: Append-Only JSONL Source of Truth',
-      'Clean Route: Wilson Lower-Bound Confidence Scoring',
-      'Quarantine Route: Strict Default Prompt Exclusion',
-      'Quarantine Route: 0.5x Composite Penalty if Forcibly Retrieved',
-      'Quarantine Route: Immutable Forensic Audit Log',
+      { name: 'Clean Route: Rebuildable SQLite Index', pattern: 'FTS5 full-text' },
+      { name: 'Clean Route: Append-Only Event Store', pattern: 'source-of-truth .jsonl' },
+      { name: 'Clean Route: Wilson Confidence Scoring', pattern: 'z = 1.96 lower bound' },
+      { name: 'Quarantine Route: Default Prompt Exclusion', pattern: 'strict isolation' },
+      { name: 'Quarantine Route: Retrieval Penalty', pattern: '0.5x composite weight' },
+      { name: 'Quarantine Route: Tamper-Evident Audit Log', pattern: 'forensic telemetry' },
     ],
   },
 ];
@@ -290,160 +301,180 @@ export function SecurityAuditScreen({ onFetchAudit }: Props): ReactNode {
 
         {/* Authentic N8N Node Sequence Flow */}
         <div className="n8n-canvas-flow">
-          {/* Node 1: Raw Ingress (Trigger Node) */}
-          <div
-            className="n8n-node-wrapper"
-            onClick={() => setSelectedStageId('stage-1')}
-            tabIndex={0}
-            role="button"
-            aria-label="Inspect Raw Ingress node"
-            onKeyDown={(e) => e.key === 'Enter' && setSelectedStageId('stage-1')}
-          >
-            <div style={{ display: 'flex', alignItems: 'center' }}>
-              <div className="n8n-trigger-icon" title="Trigger">
-                <IconLightning />
-              </div>
+          <div className="n8n-canvas-flow-inner">
+            {/* Node 1: Raw Ingress (Trigger Node) */}
+            <div
+              className="n8n-node-wrapper"
+              onClick={() => setSelectedStageId('stage-1')}
+              tabIndex={0}
+              role="button"
+              aria-label="Inspect Raw Ingress node"
+              onKeyDown={(e) => e.key === 'Enter' && setSelectedStageId('stage-1')}
+            >
               <div className={`n8n-node-box trigger-node ${selectedStageId === 'stage-1' ? 'selected' : ''}`}>
+                <div className="n8n-trigger-icon" title="Pipeline Trigger Event">
+                  <IconLightning />
+                </div>
                 <IconTerminal />
                 <div className="n8n-port-out" />
               </div>
+              <div className="n8n-node-label">Raw Ingress</div>
+              <div className="n8n-node-sub">interceptor: stdio</div>
             </div>
-            <div className="n8n-node-label">Raw Ingress</div>
-            <div className="n8n-node-sub">interceptor: stdio</div>
-          </div>
 
-          {/* Connector 1 -> 2 */}
-          <div className="n8n-connector-line">
-            <svg width="64" height="12" viewBox="0 0 64 12" fill="none">
-              <defs>
-                <marker id="arrowHead" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
-                  <path d="M0,0 L6,3 L0,6" fill="var(--border-strong)" />
-                </marker>
-              </defs>
-              <line x1="0" y1="6" x2="56" y2="6" stroke="var(--border-strong)" strokeWidth="1.5" markerEnd="url(#arrowHead)" />
-            </svg>
-          </div>
-
-          {/* Node 2: Pattern Redactor */}
-          <div
-            className="n8n-node-wrapper"
-            onClick={() => setSelectedStageId('stage-2')}
-            tabIndex={0}
-            role="button"
-            aria-label="Inspect Pattern Redactor node"
-            onKeyDown={(e) => e.key === 'Enter' && setSelectedStageId('stage-2')}
-          >
-            <div className={`n8n-node-box ${selectedStageId === 'stage-2' ? 'selected' : ''}`}>
-              <div className="n8n-port-in" />
-              <IconKey />
-              <div className="n8n-port-out" />
+            {/* Connector 1 -> 2 */}
+            <div className="n8n-connector-line">
+              <svg width="44" height="76" viewBox="0 0 44 76" fill="none">
+                <defs>
+                  <marker id="arrowHead" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+                    <path d="M0,0 L6,3 L0,6" fill="var(--border-strong)" />
+                  </marker>
+                </defs>
+                <line x1="0" y1="38" x2="38" y2="38" stroke="var(--border-strong)" strokeWidth="1.5" markerEnd="url(#arrowHead)" />
+              </svg>
             </div>
-            <div className="n8n-node-label">Pattern Redactor</div>
-            <div className="n8n-node-sub">regex: ADR-005</div>
-          </div>
 
-          {/* Connector 2 -> 3 */}
-          <div className="n8n-connector-line">
-            <svg width="64" height="12" viewBox="0 0 64 12" fill="none">
-              <line x1="0" y1="6" x2="56" y2="6" stroke="var(--border-strong)" strokeWidth="1.5" markerEnd="url(#arrowHead)" />
-            </svg>
-          </div>
-
-          {/* Node 3: Entropy Gate */}
-          <div
-            className="n8n-node-wrapper"
-            onClick={() => setSelectedStageId('stage-3')}
-            tabIndex={0}
-            role="button"
-            aria-label="Inspect Entropy Gate node"
-            onKeyDown={(e) => e.key === 'Enter' && setSelectedStageId('stage-3')}
-          >
-            <div className={`n8n-node-box ${selectedStageId === 'stage-3' ? 'selected' : ''}`}>
-              <div className="n8n-port-in" />
-              <IconWaveform />
-              <div className="n8n-port-out" />
+            {/* Node 2: Pattern Redactor */}
+            <div
+              className="n8n-node-wrapper"
+              onClick={() => setSelectedStageId('stage-2')}
+              tabIndex={0}
+              role="button"
+              aria-label="Inspect Pattern Redactor node"
+              onKeyDown={(e) => e.key === 'Enter' && setSelectedStageId('stage-2')}
+            >
+              <div className={`n8n-node-box ${selectedStageId === 'stage-2' ? 'selected' : ''}`}>
+                <div className="n8n-port-in" />
+                <IconKey />
+                <div className="n8n-port-out" />
+              </div>
+              <div className="n8n-node-label">Pattern Redactor</div>
+              <div className="n8n-node-sub">regex: ADR-005</div>
             </div>
-            <div className="n8n-node-label">Entropy Gate</div>
-            <div className="n8n-node-sub">entropy: H &gt; 4.5</div>
-          </div>
 
-          {/* Connector 3 -> 4 */}
-          <div className="n8n-connector-line">
-            <svg width="64" height="12" viewBox="0 0 64 12" fill="none">
-              <line x1="0" y1="6" x2="56" y2="6" stroke="var(--border-strong)" strokeWidth="1.5" markerEnd="url(#arrowHead)" />
-            </svg>
-          </div>
-
-          {/* Node 4: Poisoning Defense */}
-          <div
-            className="n8n-node-wrapper"
-            onClick={() => setSelectedStageId('stage-4')}
-            tabIndex={0}
-            role="button"
-            aria-label="Inspect Poisoning Defense node"
-            onKeyDown={(e) => e.key === 'Enter' && setSelectedStageId('stage-4')}
-          >
-            <div className={`n8n-node-box ${selectedStageId === 'stage-4' ? 'selected' : ''}`}>
-              <div className="n8n-port-in" />
-              <IconRadar />
-              <div className="n8n-port-out" />
+            {/* Connector 2 -> 3 */}
+            <div className="n8n-connector-line">
+              <svg width="44" height="76" viewBox="0 0 44 76" fill="none">
+                <line x1="0" y1="38" x2="38" y2="38" stroke="var(--border-strong)" strokeWidth="1.5" markerEnd="url(#arrowHead)" />
+              </svg>
             </div>
-            <div className="n8n-node-label">Poisoning Defense</div>
-            <div className="n8n-node-sub">7: detectors</div>
-          </div>
 
-          {/* Connector 4 -> 5 */}
-          <div className="n8n-connector-line">
-            <svg width="64" height="12" viewBox="0 0 64 12" fill="none">
-              <line x1="0" y1="6" x2="56" y2="6" stroke="var(--border-strong)" strokeWidth="1.5" markerEnd="url(#arrowHead)" />
-            </svg>
-          </div>
-
-          {/* Node 5: Storage & Gate */}
-          <div
-            className="n8n-node-wrapper"
-            onClick={() => setSelectedStageId('stage-5')}
-            tabIndex={0}
-            role="button"
-            aria-label="Inspect Storage and Gate destination"
-            onKeyDown={(e) => e.key === 'Enter' && setSelectedStageId('stage-5')}
-          >
-            <div className={`n8n-node-box ${selectedStageId === 'stage-5' ? 'selected' : ''}`}>
-              <div className="n8n-port-in" />
-              <IconDatabase />
-              <div className="n8n-port-out" />
+            {/* Node 3: Entropy Gate */}
+            <div
+              className="n8n-node-wrapper"
+              onClick={() => setSelectedStageId('stage-3')}
+              tabIndex={0}
+              role="button"
+              aria-label="Inspect Entropy Gate node"
+              onKeyDown={(e) => e.key === 'Enter' && setSelectedStageId('stage-3')}
+            >
+              <div className={`n8n-node-box ${selectedStageId === 'stage-3' ? 'selected' : ''}`}>
+                <div className="n8n-port-in" />
+                <IconWaveform />
+                <div className="n8n-port-out" />
+              </div>
+              <div className="n8n-node-label">Entropy Gate</div>
+              <div className="n8n-node-sub">entropy: H &gt; 4.5</div>
             </div>
-            <div className="n8n-node-label">Storage & Gate</div>
-            <div className="n8n-node-sub">sqlite: fts5</div>
+
+            {/* Connector 3 -> 4 */}
+            <div className="n8n-connector-line">
+              <svg width="44" height="76" viewBox="0 0 44 76" fill="none">
+                <line x1="0" y1="38" x2="38" y2="38" stroke="var(--border-strong)" strokeWidth="1.5" markerEnd="url(#arrowHead)" />
+              </svg>
+            </div>
+
+            {/* Node 4: Poisoning Defense */}
+            <div
+              className="n8n-node-wrapper"
+              onClick={() => setSelectedStageId('stage-4')}
+              tabIndex={0}
+              role="button"
+              aria-label="Inspect Poisoning Defense node"
+              onKeyDown={(e) => e.key === 'Enter' && setSelectedStageId('stage-4')}
+            >
+              <div className={`n8n-node-box ${selectedStageId === 'stage-4' ? 'selected' : ''}`}>
+                <div className="n8n-port-in" />
+                <IconRadar />
+                <div className="n8n-port-out" />
+              </div>
+              <div className="n8n-node-label">Poisoning Defense</div>
+              <div className="n8n-node-sub">7: detectors</div>
+            </div>
+
+            {/* Connector 4 -> 5 */}
+            <div className="n8n-connector-line">
+              <svg width="44" height="76" viewBox="0 0 44 76" fill="none">
+                <line x1="0" y1="38" x2="38" y2="38" stroke="var(--border-strong)" strokeWidth="1.5" markerEnd="url(#arrowHead)" />
+              </svg>
+            </div>
+
+            {/* Node 5: Storage & Gate */}
+            <div
+              className="n8n-node-wrapper"
+              onClick={() => setSelectedStageId('stage-5')}
+              tabIndex={0}
+              role="button"
+              aria-label="Inspect Storage and Gate destination"
+              onKeyDown={(e) => e.key === 'Enter' && setSelectedStageId('stage-5')}
+            >
+              <div className={`n8n-node-box ${selectedStageId === 'stage-5' ? 'selected' : ''}`}>
+                <div className="n8n-port-in" />
+                <IconDatabase />
+                <div className="n8n-port-out" />
+              </div>
+              <div className="n8n-node-label">Storage & Gate</div>
+              <div className="n8n-node-sub">sqlite: fts5</div>
+            </div>
           </div>
         </div>
 
-        {/* ── STAGE DEEP-DIVE INSPECTOR (CLEAN & DIRECT) ── */}
+        {/* ── STAGE DEEP-DIVE INSPECTOR (SHADCN CARD COMPOSITION) ── */}
         <div className="n8n-inspector">
           <div className="n8n-inspector-header">
             <div>
-              <div style={{ fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-muted)', fontWeight: 700 }}>
-                Stage Deep-Dive Inspector
+              <div className="n8n-inspector-eyebrow">
+                <IconShield />
+                <span>Stage Deep-Dive Inspector</span>
               </div>
-              <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-primary)', marginTop: '0.2rem' }}>
+              <h3 className="n8n-inspector-title">
                 {currentStage.title}
               </h3>
             </div>
 
-            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+            <div className="n8n-inspector-badges">
               <span className="badge gray">{currentStage.layerBadge}</span>
-              <span className="badge emerald">{currentStage.statusBadge}</span>
+              <span className="badge emerald">
+                <IconCheck /> {currentStage.statusBadge}
+              </span>
             </div>
           </div>
 
           <p className="n8n-inspector-desc">{currentStage.description}</p>
 
-          <div className="n8n-rules-grid">
-            {currentStage.rules.map((rule, idx) => (
-              <span key={idx} className="badge gray" style={{ fontSize: '0.74rem', padding: '0.35rem 0.65rem' }}>
-                {rule}
+          <div className="n8n-rules-section">
+            <div className="n8n-rules-heading">
+              <span className="n8n-rules-heading-title">{currentStage.rulesHeading}</span>
+              <span className="badge gray" style={{ fontSize: '0.7rem' }}>
+                {currentStage.rules.length} Active Rules
               </span>
-            ))}
+            </div>
+
+            <div className="n8n-rules-grid">
+              {currentStage.rules.map((rule, idx) => (
+                <div key={idx} className="n8n-rule-card">
+                  <div className="n8n-rule-card-left">
+                    <span className="n8n-rule-card-dot" />
+                    <span className="n8n-rule-card-name" title={rule.name}>
+                      {rule.name}
+                    </span>
+                  </div>
+                  <code className="n8n-rule-card-tag" title={rule.pattern}>
+                    {rule.pattern}
+                  </code>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>

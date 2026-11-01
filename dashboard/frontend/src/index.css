@@ -1809,11 +1809,18 @@ tbody tr:last-child td {
 
 .n8n-canvas-flow {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 3rem 2rem 2.5rem;
+  align-items: flex-start;
+  padding: 2.5rem 1.5rem 2rem;
   overflow-x: auto;
-  min-height: 220px;
+  min-height: 195px;
+  width: 100%;
+}
+
+.n8n-canvas-flow-inner {
+  display: flex;
+  align-items: flex-start;
+  margin: 0 auto;
+  flex-shrink: 0;
 }
 
 /* Individual Node Wrapper (Box + Label) */
@@ -1821,6 +1828,7 @@ tbody tr:last-child td {
   display: flex;
   flex-direction: column;
   align-items: center;
+  width: 96px;
   flex-shrink: 0;
   user-select: none;
   cursor: pointer;
@@ -1844,6 +1852,17 @@ tbody tr:last-child td {
 
 .n8n-node-box.trigger-node {
   border-radius: 38px 14px 14px 38px;
+}
+
+.n8n-trigger-icon {
+  position: absolute;
+  left: -22px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
 }
 
 .n8n-node-box:hover {
@@ -1916,17 +1935,17 @@ tbody tr:last-child td {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 64px;
-  margin-bottom: 2.2rem;
+  width: 44px;
+  height: 76px;
   flex-shrink: 0;
   color: var(--border-strong);
 }
 
-/* Inspector panel */
+/* Inspector panel (shadcn Card composition) */
 .n8n-inspector {
   background: var(--bg-surface);
   border-top: 1px solid var(--border-subtle);
-  padding: 1.5rem 1.75rem;
+  padding: 1.5rem 1.75rem 1.75rem;
 }
 
 .n8n-inspector-header {
@@ -1938,15 +1957,120 @@ tbody tr:last-child td {
   gap: 0.75rem;
 }
 
+.n8n-inspector-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.n8n-inspector-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-top: 0.25rem;
+  letter-spacing: -0.02em;
+}
+
+.n8n-inspector-badges {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
 .n8n-inspector-desc {
-  font-size: 0.86rem;
+  font-size: 0.88rem;
   color: var(--text-secondary);
-  line-height: 1.55;
-  margin-bottom: 1.25rem;
+  line-height: 1.6;
+  margin-bottom: 1.35rem;
+  max-width: 920px;
+}
+
+/* Rules & Signatures Section */
+.n8n-rules-section {
+  border-top: 1px solid var(--border-subtle);
+  padding-top: 1.15rem;
+}
+
+.n8n-rules-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.85rem;
+}
+
+.n8n-rules-heading-title {
+  font-size: 0.76rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
 }
 
 .n8n-rules-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 0.65rem;
+}
+
+.n8n-rule-card {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.65rem 0.85rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  transition: all 0.15s ease;
+}
+
+.n8n-rule-card:hover {
+  border-color: var(--border-strong);
+  background: var(--bg-card-hover);
+}
+
+.n8n-rule-card-left {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.n8n-rule-card-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--status-success);
+  flex-shrink: 0;
+  margin-top: 6px;
+}
+
+.n8n-rule-card-name {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  line-height: 1.4;
+}
+
+.n8n-rule-card-tag {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  flex-shrink: 0;
+  max-width: 50%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
