@@ -1,4 +1,4 @@
-import { useState, useEffect, type ReactNode } from 'react';
+import { useState, useEffect, useCallback, type ReactNode } from 'react';
 import { BrowserRouter, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import type {
   MemoryStats,
@@ -34,6 +34,26 @@ function IconMenu(): ReactNode {
       <line x1="3" y1="12" x2="21" y2="12" />
       <line x1="3" y1="6" x2="21" y2="6" />
       <line x1="3" y1="18" x2="21" y2="18" />
+    </svg>
+  );
+}
+
+function IconSidebarClose(): ReactNode {
+  return (
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+      <line x1="9" y1="3" x2="9" y2="21" />
+      <polyline points="15 9 12 12 15 15" />
+    </svg>
+  );
+}
+
+function IconSidebarOpen(): ReactNode {
+  return (
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+      <line x1="9" y1="3" x2="9" y2="21" />
+      <polyline points="13 15 16 12 13 9" />
     </svg>
   );
 }
@@ -84,6 +104,18 @@ function DashboardShell(): ReactNode {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState<boolean>(() => {
+    const saved = localStorage.getItem('agent-memory-sidebar-open');
+    return saved !== null ? saved === 'true' : true;
+  });
+
+  const toggleSidebar = useCallback(() => {
+    setSidebarOpen((prev) => {
+      const next = !prev;
+      localStorage.setItem('agent-memory-sidebar-open', String(next));
+      return next;
+    });
+  }, []);
 
   const activeScreen = location.pathname.replace('/', '') || 'overview';
 
@@ -91,6 +123,18 @@ function DashboardShell(): ReactNode {
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('agent-memory-theme', theme);
   }, [theme]);
+
+  // Keyboard shortcut: Ctrl+B or Cmd+B to toggle sidebar
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b') {
+        e.preventDefault();
+        toggleSidebar();
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [toggleSidebar]);
 
   useEffect(() => {
     setMobileNavOpen(false);
@@ -236,7 +280,7 @@ function DashboardShell(): ReactNode {
   const mcpIconSrc = theme === 'dark' ? '/mcp-icon-white.png' : '/mcp-icon-black.png';
 
   return (
-    <div className="app-container">
+    <div className={`app-container ${sidebarOpen ? 'sidebar-expanded' : 'sidebar-collapsed'}`}>
       <button
         className="mobile-nav-toggle"
         type="button"
@@ -247,21 +291,32 @@ function DashboardShell(): ReactNode {
       </button>
       <div className={`nav-overlay ${mobileNavOpen ? 'open' : ''}`} onClick={() => setMobileNavOpen(false)} />
 
-      <aside className={`side-nav ${mobileNavOpen ? 'open' : ''}`}>
+      <aside className={`side-nav ${sidebarOpen ? 'open' : 'collapsed'} ${mobileNavOpen ? 'mobile-open' : ''}`}>
         <div className="brand-section">
-          <div className="brand-icon-box" title="Agent Memory Observability Console">
-            <img
-              src={mcpIconSrc}
-              alt="MCP"
-              width={22}
-              height={22}
-              style={{ display: 'block', objectFit: 'contain' }}
-            />
+          <div className="brand-main">
+            <div className="brand-icon-box" title="Agent Memory Observability Console">
+              <img
+                src={mcpIconSrc}
+                alt="MCP"
+                width={22}
+                height={22}
+                style={{ display: 'block', objectFit: 'contain' }}
+              />
+            </div>
+            <div className="brand-meta">
+              <span className="brand-title">Memory Console</span>
+              <span className="brand-subtitle mono">agent-memory-mcp &bull; v0.1.0</span>
+            </div>
           </div>
-          <div className="brand-meta">
-            <span className="brand-title">Memory Console</span>
-            <span className="brand-subtitle mono">agent-memory-mcp &bull; v0.1.0</span>
-          </div>
+          <button
+            type="button"
+            className="sidebar-collapse-btn desktop-only"
+            onClick={toggleSidebar}
+            title="Collapse sidebar (Ctrl+B)"
+            aria-label="Collapse sidebar"
+          >
+            <IconSidebarClose />
+          </button>
         </div>
 
         <nav className="nav-links" role="tablist" aria-label="Dashboard views">
@@ -291,14 +346,14 @@ function DashboardShell(): ReactNode {
                 {badgeCount > 0 && (
                   <span
                     className={`nav-badge ${item.key === 'approvals'
-                        ? 'warning'
-                        : item.key === 'security'
-                          ? 'danger'
-                          : item.key === 'feed'
-                            ? 'cyan'
-                            : item.key === 'records'
-                              ? 'gray'
-                              : ''
+                      ? 'warning'
+                      : item.key === 'security'
+                        ? 'danger'
+                        : item.key === 'feed'
+                          ? 'cyan'
+                          : item.key === 'records'
+                            ? 'gray'
+                            : ''
                       }`}
                   >
                     {badgeCount}
@@ -335,6 +390,50 @@ function DashboardShell(): ReactNode {
       </aside>
 
       <main className="main-content">
+        <header className="top-header-bar">
+          <div className="top-header-left">
+            {!sidebarOpen && (
+              <button
+                type="button"
+                className="sidebar-toggle-btn desktop-only"
+                onClick={toggleSidebar}
+                title="Expand sidebar (Ctrl+B)"
+                aria-label="Expand sidebar"
+              >
+                <IconSidebarOpen />
+              </button>
+            )}
+            <div className="breadcrumb-trail">
+              <span className="breadcrumb-root">Memory Console</span>
+              <span className="breadcrumb-separator">/</span>
+              <span className="breadcrumb-current">
+                {screens.find((s) => s.key === activeScreen)?.label || 'Overview'}
+              </span>
+            </div>
+          </div>
+
+          <div className="top-header-right">
+            <div className="status-badge-inline" title="Bridge Status">
+              <span
+                className="pulse-dot"
+                style={{
+                  background: isStreaming ? 'var(--status-success)' : 'var(--status-warning)',
+                }}
+              />
+              <span className="mono" style={{ fontSize: '0.74rem' }}>
+                {isStreaming ? '127.0.0.1:4321' : 'Disconnected'}
+              </span>
+            </div>
+            <button
+              className="theme-toggle-btn-compact"
+              onClick={() => setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'))}
+              title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`}
+              aria-label="Toggle visual theme"
+            >
+              {theme === 'dark' ? <IconSun /> : <IconMoon />}
+            </button>
+          </div>
+        </header>
         {fetchError && (
           <div className="error-banner">
             <div>

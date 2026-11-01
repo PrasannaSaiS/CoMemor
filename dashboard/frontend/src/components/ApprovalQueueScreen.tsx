@@ -8,6 +8,14 @@ interface Props {
   onDecision: (id: string, decision: 'approve' | 'deny', notes?: string) => Promise<boolean>;
 }
 
+function IconShield(): ReactNode {
+  return (
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+    </svg>
+  );
+}
+
 export function ApprovalQueueScreen({ approvals, isLoading, onDecision }: Props): ReactNode {
   const [operatorNotes, setOperatorNotes] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState<string | null>(null);
@@ -33,7 +41,7 @@ export function ApprovalQueueScreen({ approvals, isLoading, onDecision }: Props)
       case 'HIGH':
         return <span className="badge rose">HIGH RISK LEVEL</span>;
       case 'MEDIUM':
-        return <span className="badge amber">MEDIUM RISK LEVEL</span>;
+        return <span className="badge gray">MEDIUM RISK LEVEL</span>;
       case 'LOW':
       default:
         return <span className="badge emerald">LOW RISK LEVEL</span>;
@@ -76,7 +84,9 @@ export function ApprovalQueueScreen({ approvals, isLoading, onDecision }: Props)
       {approvals.length === 0 ? (
         <div className="panel">
           <div className="empty-state">
-            <div className="empty-state-icon">🛡️</div>
+            <div className="empty-state-icon">
+              <IconShield />
+            </div>
             <h2 className="empty-state-title">Approval Queue Clean</h2>
             <p className="empty-state-desc">
               Zero execution authorizations are pending. When an agent calls verify_fix with a non-allowlisted command or high-risk shell arguments, the execution barrier intercepts it here for operator authorization.
@@ -144,8 +154,8 @@ export function ApprovalQueueScreen({ approvals, isLoading, onDecision }: Props)
                   <div className="mini-label">Security Policy Findings:</div>
                   <div className="risk-badges">
                     {appr.risk.reasons.map((r, i) => (
-                      <span key={i} className={`badge ${isHighRisk ? 'rose' : 'amber'}`}>
-                        ⚠ {r}
+                      <span key={i} className={`badge ${isHighRisk ? 'rose' : 'gray'}`}>
+                        {r}
                       </span>
                     ))}
                   </div>

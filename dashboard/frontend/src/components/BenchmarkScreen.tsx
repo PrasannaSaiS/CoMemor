@@ -5,6 +5,15 @@ interface Props {
   onFetchBenchmarks: () => Promise<BenchmarkData | null>;
 }
 
+function IconTrendUp(): ReactNode {
+  return (
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
+      <polyline points="17 6 23 6 23 12" />
+    </svg>
+  );
+}
+
 export function BenchmarkScreen({ onFetchBenchmarks }: Props): ReactNode {
   const [data, setData] = useState<BenchmarkData | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -51,7 +60,9 @@ export function BenchmarkScreen({ onFetchBenchmarks }: Props): ReactNode {
         </div>
         <div className="panel">
           <div className="empty-state">
-            <div className="empty-state-icon">📈</div>
+            <div className="empty-state-icon">
+              <IconTrendUp />
+            </div>
             <h2 className="empty-state-title">No evaluation data available</h2>
             <p className="empty-state-desc">Benchmark data has not been generated yet. Once the evaluation harness runs, this screen will populate with baselines and latency results.</p>
           </div>
@@ -68,7 +79,7 @@ export function BenchmarkScreen({ onFetchBenchmarks }: Props): ReactNode {
             <h1 className="screen-title">Benchmark & Evaluation Results</h1>
             <p className="screen-subtitle">Empirical evaluation comparisons for repair speed, tool usage, and retrieval latency.</p>
           </div>
-          <div className="badge violet">Empirical Evaluation Harness Active</div>
+          <div className="badge gray">Empirical Evaluation Harness Active</div>
         </div>
       </div>
 
@@ -125,7 +136,7 @@ export function BenchmarkScreen({ onFetchBenchmarks }: Props): ReactNode {
                     </div>
                   </div>
                   <div className="metric-row"><span>Time to Repair</span><strong className="mono">{b.timeToRepairSec}s</strong></div>
-                  <div className="metric-row"><span>Tool Calls</span><strong className="mono" style={{ color: 'var(--accent-cyan)' }}>{b.toolCalls}</strong></div>
+                  <div className="metric-row"><span>Tool Calls</span><strong className="mono" style={{ color: 'var(--text-primary)' }}>{b.toolCalls}</strong></div>
                   <div className="metric-row"><span>False Reuse Rate</span><strong className="mono" style={{ color: b.falseReuseRate > 0.03 ? 'var(--status-danger)' : 'var(--status-success)' }}>{(b.falseReuseRate * 100).toFixed(1)}%</strong></div>
                 </div>
               </div>
@@ -176,7 +187,7 @@ export function BenchmarkScreen({ onFetchBenchmarks }: Props): ReactNode {
           <div>
             <h2 className="panel-title">Ablation Analysis: Safety Subsystem Contributions</h2>
           </div>
-          <span className="badge cyan">Measured Vulnerability Deficit</span>
+          <span className="badge gray">Measured Vulnerability Deficit</span>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem' }}>

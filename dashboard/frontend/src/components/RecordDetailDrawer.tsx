@@ -28,23 +28,23 @@ export function RecordDetailDrawer({ record, onClose }: Props): ReactNode {
         <div className="drawer-header">
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem', marginBottom: '0.25rem', flexWrap: 'wrap' }}>
-              <span className="mono" style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--accent-cyan)' }}>{record.id}</span>
+              <span className="mono" style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-primary)' }}>{record.id}</span>
               {record.isQuarantined && <span className="badge rose">QUARANTINED</span>}
               {record.verificationStatus === 'verified_success' && <span className="badge emerald">VERIFIED</span>}
-              <span className="badge violet">{record.commandFamily}</span>
+              <span className="badge gray">{record.commandFamily}</span>
             </div>
             <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>
               Captured: {new Date(record.createdAt).toLocaleString()} • Normalizer v{record.normalizerVersion}
             </div>
           </div>
 
-          <button className="btn btn-outline" onClick={onClose} aria-label="Close record detail drawer">✕ Close</button>
+          <button className="btn btn-outline" onClick={onClose} aria-label="Close record detail drawer">Close</button>
         </div>
 
         <div className="drawer-body">
           {record.poisoningFlag && (
             <div style={{ background: 'var(--status-danger-bg)', border: '1px solid var(--status-danger-bd)', borderRadius: '6px', padding: '1rem', marginBottom: '1.35rem' }}>
-              <div style={{ fontWeight: 600, color: 'var(--status-danger)', marginBottom: '0.25rem' }}>⚠ Security & Adversarial Injection Quarantine Flag</div>
+              <div style={{ fontWeight: 600, color: 'var(--status-danger)', marginBottom: '0.25rem' }}>Security & Adversarial Injection Quarantine Flag</div>
               <div style={{ fontSize: '0.84rem', color: 'var(--text-primary)', marginBottom: '0.35rem' }}>Reason: {record.poisoningFlag.reason}</div>
               <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>
                 Flagged at: {new Date(record.poisoningFlag.raisedAt).toLocaleString()} • Status:{' '}
@@ -60,13 +60,13 @@ export function RecordDetailDrawer({ record, onClose }: Props): ReactNode {
                 <>
                   <div className="timeline-node">
                     <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>PREDECESSOR</span>
-                    <span className="mono" style={{ color: 'var(--status-warning)', fontWeight: 600, fontSize: '0.82rem' }}>{record.supersedes}</span>
-                    <span className="badge amber" style={{ fontSize: '0.65rem' }}>STALE LOCKFILE</span>
+                    <span className="mono" style={{ color: 'var(--text-primary)', fontWeight: 600, fontSize: '0.82rem' }}>{record.supersedes}</span>
+                    <span className="badge gray" style={{ fontSize: '0.65rem' }}>STALE LOCKFILE</span>
                   </div>
-                  <div className="timeline-arrow"><span>replaces ──▶</span><span style={{ fontSize: '0.68rem', color: 'var(--accent-cyan)' }}>lockfile drift</span></div>
-                  <div className="timeline-node" style={{ borderColor: 'var(--accent-cyan)', background: 'var(--accent-cyan-bg)' }}>
-                    <span style={{ fontSize: '0.7rem', color: 'var(--accent-cyan)' }}>ACTIVE FIX</span>
-                    <span className="mono" style={{ color: 'var(--accent-cyan)', fontWeight: 700, fontSize: '0.82rem' }}>{record.id}</span>
+                  <div className="timeline-arrow"><span>replaces ──▶</span><span style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>lockfile drift</span></div>
+                  <div className="timeline-node" style={{ borderColor: 'var(--border-strong)', background: 'var(--bg-card)' }}>
+                    <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>ACTIVE FIX</span>
+                    <span className="mono" style={{ color: 'var(--text-primary)', fontWeight: 700, fontSize: '0.82rem' }}>{record.id}</span>
                     <span className="badge emerald" style={{ fontSize: '0.65rem' }}>CURRENT REVISION</span>
                   </div>
                 </>
@@ -103,7 +103,7 @@ export function RecordDetailDrawer({ record, onClose }: Props): ReactNode {
               </div>
               <div style={{ background: 'var(--bg-subtle)', padding: '0.85rem', borderRadius: '6px', border: '1px solid var(--border-subtle)' }}>
                 <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Wilson Lower Bound (95% CI)</div>
-                <div className="mono" style={{ fontWeight: 700, color: 'var(--accent-violet)', marginTop: '0.2rem', fontSize: '0.95rem' }}>
+                <div className="mono" style={{ fontWeight: 700, color: 'var(--text-primary)', marginTop: '0.2rem', fontSize: '0.95rem' }}>
                   {record.wilsonLowerBound !== null && record.wilsonLowerBound !== undefined ? `${(record.wilsonLowerBound * 100).toFixed(1)}%` : 'N/A (unverified)'}
                 </div>
               </div>

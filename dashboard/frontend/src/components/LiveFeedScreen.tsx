@@ -81,13 +81,13 @@ export function LiveFeedScreen({ events, isStreaming, onClear }: Props): ReactNo
     if (eventName.includes('find')) {
       return {
         typeClass: 'find',
-        badge: <span className="badge cyan">FIND_FIX</span>,
+        badge: <span className="badge gray">FIND_FIX</span>,
       };
     }
     if (eventName.includes('verify')) {
       return {
         typeClass: 'verify',
-        badge: <span className="badge violet">VERIFY_FIX</span>,
+        badge: <span className="badge gray">VERIFY_FIX</span>,
       };
     }
     return {

@@ -183,7 +183,7 @@ export function OverviewScreen({ stats, isLoading, onNavigate }: Props): ReactNo
 
         {/* 2. Stale Drift */}
         <div
-          className={`stat-hero-card ${hasStale ? 'amber' : 'cyan'}`}
+          className={`stat-hero-card ${hasStale ? 'amber' : ''}`}
           onClick={() => onNavigate('records')}
           style={{ cursor: 'pointer' }}
           role="button"
@@ -209,13 +209,13 @@ export function OverviewScreen({ stats, isLoading, onNavigate }: Props): ReactNo
                 }
               />
             </span>
-            <span className={`badge ${hasStale ? 'amber' : 'cyan'}`}>
+            <span className="badge gray">
               {hasStale ? 'DRIFT DETECTED' : 'IN SYNC'}
             </span>
           </div>
           <div
             className="stat-value"
-            style={{ color: hasStale ? 'var(--status-warning)' : 'var(--accent)' }}
+            style={{ color: 'var(--text-primary)' }}
           >
             {stats.staleCount}
           </div>
@@ -301,9 +301,9 @@ export function OverviewScreen({ stats, isLoading, onNavigate }: Props): ReactNo
                 }
               />
             </span>
-            <span className="badge violet">Confirmed</span>
+            <span className="badge gray">Confirmed</span>
           </div>
-          <div className="stat-value" style={{ color: 'var(--accent)' }}>
+          <div className="stat-value" style={{ color: 'var(--text-primary)' }}>
             {stats.verifiedCount}
           </div>
           <div className="stat-subtext">Sandbox-verified or operator-approved</div>
@@ -369,21 +369,21 @@ export function OverviewScreen({ stats, isLoading, onNavigate }: Props): ReactNo
               label: '< 24 Hours',
               sub: 'Recent',
               count: stats.ageDistribution.under24h,
-              color: 'var(--accent)',
+              color: 'var(--text-secondary)',
               decay: '0.95×',
             },
             {
               label: '< 7 Days',
               sub: 'Established',
               count: stats.ageDistribution.under7d,
-              color: 'var(--text-secondary)',
+              color: 'var(--text-muted)',
               decay: '0.85×',
             },
             {
               label: '7+ Days',
               sub: 'Aging',
               count: stats.ageDistribution.over7d,
-              color: 'var(--status-warning)',
+              color: 'var(--border-strong)',
               decay: '0.70×',
             },
           ].map((item) => (
