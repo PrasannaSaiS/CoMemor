@@ -8,6 +8,25 @@ interface Props {
   onClear: () => void;
 }
 
+/* SVG icon for the empty state */
+function IconSignal(): ReactNode {
+  return (
+    <svg
+      width="32"
+      height="32"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      style={{ opacity: 0.45 }}
+    >
+      <path d="M2 20h.01M7 20v-4M12 20v-8M17 20V8M22 4v16" />
+    </svg>
+  );
+}
+
 export function LiveFeedScreen({ events, isStreaming, onClear }: Props): ReactNode {
   const [filter, setFilter] = useState<string>('all');
   const [autoScroll, setAutoScroll] = useState<boolean>(true);
@@ -22,21 +41,25 @@ export function LiveFeedScreen({ events, isStreaming, onClear }: Props): ReactNo
     return true;
   });
 
+  /*
+   * estimateSize should be large enough to avoid overlap.
+   * Each item has two lines of content + padding. 88px covers it well;
+   * the virtualizer will remeasure dynamically via measureElement when
+   * content is actually taller.
+   */
   const virtualizer = useVirtualizer({
     count: filteredEvents.length,
     getScrollElement: () => feedRef.current,
-    estimateSize: () => 110,
-    overscan: 10,
+    // 62px accurately covers a 2-line item; measureElement corrects dynamically
+    estimateSize: () => 62,
+    overscan: 8,
   });
 
   useEffect(() => {
     if (autoScroll && feedRef.current) {
       const last = filteredEvents.length - 1;
       if (last >= 0) {
-        const item = virtualizer.getVirtualItems().at(-1);
-        if (item) {
-          feedRef.current.scrollTo({ top: item.start + item.size, behavior: 'smooth' });
-        }
+        virtualizer.scrollToIndex(last, { behavior: 'smooth' });
       }
     }
   }, [autoScroll, filteredEvents.length, virtualizer]);
@@ -80,7 +103,7 @@ export function LiveFeedScreen({ events, isStreaming, onClear }: Props): ReactNo
           <div>
             <h1 className="screen-title">Live Activity Feed</h1>
             <p className="screen-subtitle">
-              High-throughput SSE event stream of MCP tool calls, deterministic fingerprinting, and retrieval decisions.
+              Real-time SSE event stream — MCP tool calls, fingerprinting, and retrieval decisions.
             </p>
           </div>
 
@@ -133,14 +156,22 @@ export function LiveFeedScreen({ events, isStreaming, onClear }: Props): ReactNo
       <div className="panel feed-panel">
         {filteredEvents.length === 0 ? (
           <div className="empty-state">
-            <div className="empty-state-icon">📡</div>
+            <div className="empty-state-icon">
+              <IconSignal />
+            </div>
             <h2 className="empty-state-title">Awaiting Live Telemetry</h2>
             <p className="empty-state-desc">
-              Events stream in real time over SSE when an AI agent calls tools (record_failure, find_fix, or verify_fix).
+              Events stream in real time over SSE when an AI agent calls tools
+              (<code>record_failure</code>, <code>find_fix</code>, or <code>verify_fix</code>).
             </p>
           </div>
         ) : (
-          <div ref={feedRef} className="feed-scroll" style={{ height: '620px', overflow: 'auto' }}>
+          <div
+            ref={feedRef}
+            className="feed-scroll"
+            style={{ height: '620px', overflowY: 'auto', overflowX: 'hidden' }}
+          >
+            {/* Total scrollable height */}
             <div style={{ height: `${virtualizer.getTotalSize()}px`, position: 'relative' }}>
               {virtualizer.getVirtualItems().map((virtualRow) => {
                 const evt = filteredEvents[virtualRow.index];
@@ -148,30 +179,53 @@ export function LiveFeedScreen({ events, isStreaming, onClear }: Props): ReactNo
 
                 return (
                   <div
-                    key={`${evt.time ?? virtualRow.index}-${virtualRow.index}`}
-                    className={`feed-item ${typeClass}`}
+                    key={`${evt.time ?? ''}-${virtualRow.index}`}
+                    data-index={virtualRow.index}
+                    ref={virtualizer.measureElement}
                     style={{
                       position: 'absolute',
                       top: 0,
                       left: 0,
                       width: '100%',
                       transform: `translateY(${virtualRow.start}px)`,
+                      // 8px bottom margin = gap between cards; counted in measureElement height
+                      paddingBottom: '8px',
                     }}
                   >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                  <div className={`feed-item ${typeClass}`}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
                         {badge}
                         <span style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '0.85rem' }}>
                           {evt.msg ?? evt.event}
                         </span>
                       </div>
 
-                      <span className="mono" style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                      <span
+                        className="mono"
+                        style={{
+                          fontSize: '0.72rem',
+                          color: 'var(--text-muted)',
+                          whiteSpace: 'nowrap',
+                          paddingLeft: '0.75rem',
+                          flexShrink: 0,
+                        }}
+                      >
                         {evt.time ? new Date(evt.time).toLocaleTimeString() : 'now'}
                       </span>
                     </div>
 
-                    <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.85rem', fontSize: '0.76rem', color: 'var(--text-secondary)' }}>
+                    <div
+                      style={{
+                        display: 'flex',
+                        flexWrap: 'wrap',
+                        alignItems: 'center',
+                        gap: '0.75rem 1.1rem',
+                        fontSize: '0.76rem',
+                        color: 'var(--text-secondary)',
+                        marginTop: '0.35rem',
+                      }}
+                    >
                       {evt.command && (
                         <div>
                           <span style={{ color: 'var(--text-muted)' }}>cmd: </span>
@@ -182,7 +236,9 @@ export function LiveFeedScreen({ events, isStreaming, onClear }: Props): ReactNo
                       {evt.fingerprint && (
                         <div>
                           <span style={{ color: 'var(--text-muted)' }}>fp: </span>
-                          <span className="mono" style={{ color: 'var(--accent)' }}>{String(evt.fingerprint).slice(0, 16)}…</span>
+                          <span className="mono" style={{ color: 'var(--accent)' }}>
+                            {String(evt.fingerprint).slice(0, 16)}&hellip;
+                          </span>
                         </div>
                       )}
 
@@ -200,8 +256,13 @@ export function LiveFeedScreen({ events, isStreaming, onClear }: Props): ReactNo
                         </div>
                       )}
 
-                      {evt.quarantined && <span className="badge rose" style={{ fontSize: '0.68rem' }}>BLOCKED</span>}
+                      {evt.quarantined && (
+                        <span className="badge rose" style={{ fontSize: '0.68rem' }}>
+                          BLOCKED
+                        </span>
+                      )}
                     </div>
+                  </div>
                   </div>
                 );
               })}

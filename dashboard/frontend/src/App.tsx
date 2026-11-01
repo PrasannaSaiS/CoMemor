@@ -198,6 +198,9 @@ function DashboardShell(): ReactNode {
     navigate(`/${screen}`);
   };
 
+  /* Icon src swaps with theme */
+  const mcpIconSrc = theme === 'dark' ? '/mcp-icon-white.png' : '/mcp-icon-black.png';
+
   return (
     <div className="app-container">
       <button
@@ -206,18 +209,24 @@ function DashboardShell(): ReactNode {
         aria-label="Toggle navigation"
         onClick={() => setMobileNavOpen((prev) => !prev)}
       >
-        ☰
+        <IconMenu />
       </button>
       <div className={`nav-overlay ${mobileNavOpen ? 'open' : ''}`} onClick={() => setMobileNavOpen(false)} />
 
       <aside className={`side-nav ${mobileNavOpen ? 'open' : ''}`}>
         <div className="brand-section">
           <div className="brand-icon-box" title="Agent Memory Observability Console">
-            ⚡
+            <img
+              src={mcpIconSrc}
+              alt="MCP"
+              width={22}
+              height={22}
+              style={{ display: 'block', objectFit: 'contain' }}
+            />
           </div>
           <div className="brand-meta">
             <span className="brand-title">Memory Console</span>
-            <span className="brand-subtitle mono">agent-memory-mcp • v0.1.0</span>
+            <span className="brand-subtitle mono">agent-memory-mcp &bull; v0.1.0</span>
           </div>
         </div>
 
@@ -247,8 +256,7 @@ function DashboardShell(): ReactNode {
                 {item.label}
                 {badgeCount > 0 && (
                   <span
-                    className={`nav-badge ${
-                      item.key === 'approvals'
+                    className={`nav-badge ${item.key === 'approvals'
                         ? 'warning'
                         : item.key === 'security'
                           ? 'danger'
@@ -257,7 +265,7 @@ function DashboardShell(): ReactNode {
                             : item.key === 'records'
                               ? 'gray'
                               : ''
-                    }`}
+                      }`}
                   >
                     {badgeCount}
                   </span>
@@ -284,7 +292,10 @@ function DashboardShell(): ReactNode {
             title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`}
             aria-label="Toggle visual theme"
           >
-            {theme === 'dark' ? '☀' : '☾'}
+            {theme === 'dark' ? <IconSun /> : <IconMoon />}
+            <span style={{ fontSize: '0.75rem', marginLeft: '0.3rem' }}>
+              {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+            </span>
           </button>
         </div>
       </aside>
