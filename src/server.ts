@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * MCP Server entry point — agent-memory-mcp.
+ * MCP Server entry point — CoMemor.
  * Targets MCP specification 2026-07-28.
  *
  * CRITICAL INVARIANT: stdout carries JSON-RPC framing only.
@@ -66,7 +66,7 @@ export function checkNodeVersion(
       error: 'unsupported_node_version',
       required: '>=22.5.0',
       actual: versionString,
-      message: `agent-memory-mcp requires Node.js >= 22.5.0 (for built-in node:sqlite DatabaseSync). Current runtime is ${versionString}.`,
+      message: `CoMemor requires Node.js >= 22.5.0 (for built-in node:sqlite DatabaseSync). Current runtime is ${versionString}.`,
       timestamp: new Date().toISOString(),
     };
     stderrWrite(JSON.stringify(errPayload) + '\n');
@@ -199,7 +199,7 @@ const service = new MemoryService({
 
 export const server = new Server(
   {
-    name: 'agent-memory-mcp',
+    name: 'CoMemor',
     version: '1.0.0',
   },
   {
@@ -216,12 +216,12 @@ export const server = new Server(
 const SAFE_WORKFLOW_PROMPT = {
   name: 'agent_memory_safe_workflow',
   description:
-    'Describes the safe, step-by-step workflow for using agent-memory-mcp to diagnose and repair build or runtime failures without unsafe automated execution.',
+    'Describes the safe, step-by-step workflow for using CoMemor to diagnose and repair build or runtime failures without unsafe automated execution.',
   arguments: [] as [],
 } as const;
 
 const SAFE_WORKFLOW_TEXT = `
-# agent-memory-mcp — Safe Repair Workflow
+# CoMemor — Safe Repair Workflow
 
 Follow every step in order. Never skip step 3 (redaction) or step 6 (user approval).
 
@@ -456,7 +456,7 @@ export function shutdown(signal = 'SIGTERM'): Promise<void> {
   } catch (err) {
     logger.error({ event: 'shutdown_error', error: String(err) }, 'Error during storage shutdown');
   }
-  logger.info({ event: 'server_shutdown_complete' }, 'agent-memory-mcp server shutdown complete');
+  logger.info({ event: 'server_shutdown_complete' }, 'CoMemor server shutdown complete');
   return Promise.resolve();
 }
 
@@ -484,7 +484,7 @@ export async function startServer(): Promise<void> {
   await server.connect(transport);
   logger.info(
     { event: 'server_started', transport: 'stdio', version: '1.0.0' },
-    'agent-memory-mcp server started',
+    'CoMemor server started',
   );
 }
 

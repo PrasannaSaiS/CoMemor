@@ -1,6 +1,6 @@
 ﻿# MCP Host Configuration
 
-> **Compatibility notice**: These examples reflect the MCP specification as of `2026-07-28` and **agent-memory-mcp v0.1.0**.
+> **Compatibility notice**: These examples reflect the MCP specification as of `2026-07-28` and **CoMemor v0.1.0**.
 > Configuration formats change across MCP host releases. Verify against your host documentation. These examples have **not** been end-to-end tested against a live host — manual testing required before claiming compatibility.
 
 ---
@@ -12,7 +12,7 @@
   "mcpServers": {
     "agent-memory": {
       "command": "node",
-      "args": ["/absolute/path/to/agent-memory-mcp/dist/server.js"],
+      "args": ["/absolute/path/to/CoMemor/dist/server.js"],
       "env": {
         "AGENT_MEMORY_DIR": "/absolute/path/to/project/.agent-memory",
         "AGENT_MEMORY_REPO": "my-project"
@@ -35,7 +35,7 @@
   "mcpServers": {
     "agent-memory": {
       "command": "node",
-      "args": ["/absolute/path/to/agent-memory-mcp/dist/server.js"],
+      "args": ["/absolute/path/to/CoMemor/dist/server.js"],
       "env": {
         "AGENT_MEMORY_DIR": "${workspaceFolder}/.agent-memory",
         "AGENT_MEMORY_REPO": "${workspaceFolderBasename}"

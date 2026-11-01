@@ -1,5 +1,5 @@
 /**
- * Strict Zod validation schemas for agent-memory-mcp tool inputs.
+ * Strict Zod validation schemas for CoMemor tool inputs.
  */
 
 import { z } from 'zod';

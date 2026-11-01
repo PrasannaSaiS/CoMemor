@@ -1,4 +1,4 @@
-# Threat Model — agent-memory-mcp
+# Threat Model — CoMemor
 
 **Version:** 1.0  
 **Date:** 2026-09-10  

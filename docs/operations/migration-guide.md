@@ -8,7 +8,7 @@
 
 ## 1. Overview of Changes in Version 0.1.0
 
-Version 0.1.0 transitions `agent-memory-mcp` to a hardened, production-grade memory ecosystem with:
+Version 0.1.0 transitions `CoMemor` to a hardened, production-grade memory ecosystem with:
 - **Strict Protocol Compliance:** Full adherence to MCP specification version `2026-07-28`.
 - **Dual Storage Architecture:** Append-only `records.jsonl` as immutable source of truth paired with a fast, disposable `node:sqlite` index.
 - **Sanitization Envelope & Poisoning Defenses:** Automated homoglyph neutralization, delimiter sanitization, and heuristic quarantine flags.
@@ -19,11 +19,11 @@ Version 0.1.0 transitions `agent-memory-mcp` to a hardened, production-grade mem
 
 ## 2. Upgrading Data Files to Schema Version 1
 
-Every record written by `agent-memory-mcp` includes `schemaVersion: 1`.
+Every record written by `CoMemor` includes `schemaVersion: 1`.
 
 ### 2.1 Backward Compatibility Invariant
 If you have legacy JSONL files created during earlier experimental iterations:
-1. `agent-memory-mcp` automatically treats missing `schemaVersion` fields as version 1 defaults where fields are backward compatible.
+1. `CoMemor` automatically treats missing `schemaVersion` fields as version 1 defaults where fields are backward compatible.
 2. If custom fields exist, they are preserved in the raw JSON payload in SQLite's `data` column without schema violation.
 
 ### 2.2 Rebuilding the SQLite Index
@@ -39,7 +39,7 @@ The SQLite index (`.agent-memory/index.db`) is strictly a read accelerator and r
    # On Windows PowerShell:
    Remove-Item .agent-memory/index.db -Force
    ```
-3. Restart `agent-memory-mcp`. On startup, `MemoryService` detects the missing `index.db`, re-creates the schema tables (`records`, `meta`), and automatically re-indexes every valid record from `.agent-memory/records.jsonl`.
+3. Restart `CoMemor`. On startup, `MemoryService` detects the missing `index.db`, re-creates the schema tables (`records`, `meta`), and automatically re-indexes every valid record from `.agent-memory/records.jsonl`.
 
 ---
 

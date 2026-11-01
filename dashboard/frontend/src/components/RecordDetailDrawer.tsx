@@ -115,7 +115,7 @@ export function RecordDetailDrawer({ record, onClose }: Props): ReactNode {
             <div style={{ background: 'var(--bg-subtle)', padding: '0.85rem', borderRadius: '6px', border: '1px solid var(--border-subtle)', fontSize: '0.8rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.35rem' }}><span style={{ color: 'var(--text-muted)' }}>Git Commit:</span><span className="mono" style={{ color: 'var(--text-primary)' }}>{record.provenance?.gitCommit || 'N/A'}</span></div>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.35rem' }}><span style={{ color: 'var(--text-muted)' }}>Branch:</span><span className="mono" style={{ color: 'var(--text-primary)' }}>{record.provenance?.gitBranch || 'N/A'}</span></div>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--text-muted)' }}>Captured By:</span><span style={{ color: 'var(--text-primary)' }}>{record.provenance?.gitAuthor || 'agent-memory-mcp'}</span></div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--text-muted)' }}>Captured By:</span><span style={{ color: 'var(--text-primary)' }}>{record.provenance?.gitAuthor || 'CoMemor'}</span></div>
             </div>
           </div>
 

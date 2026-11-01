@@ -1,5 +1,5 @@
 /**
- * Shared TypeScript types for agent-memory-mcp.
+ * Shared TypeScript types for CoMemor.
  *
  * DO NOT add logic here. This file is data-shape only.
  * Schema changes require a migration, a schema-version bump, and a test.

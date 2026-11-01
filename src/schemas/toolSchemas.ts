@@ -1,5 +1,5 @@
 /**
- * JSON Schema definitions for agent-memory-mcp tools.
+ * JSON Schema definitions for CoMemor tools.
  * Conforms to JSON Schema Draft-07 / MCP specification.
  */
 

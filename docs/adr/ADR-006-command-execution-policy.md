@@ -18,7 +18,7 @@ Direct execution of commands proposed by or retrieved from an automated memory s
 
 ## Decision
 
-We enforce a strict four-layer defense-in-depth policy on all command executions in `agent-memory-mcp`:
+We enforce a strict four-layer defense-in-depth policy on all command executions in `CoMemor`:
 
 ### 1. Default to Dry-Run Mode
 - By default, all calls to `verify_fix` operate in `dryRun: true` mode.
@@ -40,7 +40,7 @@ Only explicitly recognized test, build, and package commands are allowed:
 - Execution environment variables are scrubbed; only minimal system PATH and safe Node environment variables are inherited. Sensitive credentials (`GITHUB_TOKEN`, `AWS_*`, `NPM_TOKEN`) are explicitly wiped from child process environments.
 
 ### 4. Human Approval Workflow for Live Execution
-- If an agent requests live execution for a command classified with medium or high risk, `agent-memory-mcp` queues the request in `.agent-memory/approvals-pending.jsonl`.
+- If an agent requests live execution for a command classified with medium or high risk, `CoMemor` queues the request in `.agent-memory/approvals-pending.jsonl`.
 - The MCP server returns a status of `pending_approval` with an `approvalId`.
 - Execution can only proceed after a human operator marks the item approved in `.agent-memory/approvals-resolved.jsonl` (typically via the Memory Console Dashboard).
 

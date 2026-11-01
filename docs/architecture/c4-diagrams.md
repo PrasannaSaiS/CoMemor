@@ -1,6 +1,6 @@
-# C4 Architecture Diagrams — agent-memory-mcp
+# C4 Architecture Diagrams — CoMemor
 
-This document contains standalone, detailed Mermaid C4 diagrams for `agent-memory-mcp`.
+This document contains standalone, detailed Mermaid C4 diagrams for `CoMemor`.
 
 ---
 
@@ -8,13 +8,13 @@ This document contains standalone, detailed Mermaid C4 diagrams for `agent-memor
 
 ```mermaid
 C4Context
-  title System Context Diagram — agent-memory-mcp
+  title System Context Diagram — CoMemor
 
   Person(developer, "Developer", "Interacts with AI coding agents and reviews stored failure-fix records")
   System(mcpHost, "AI Coding Agent / MCP Host", "Drives code generation and invokes MCP tools (Cursor, Claude Desktop, VS Code)")
   
-  System_Boundary(b1, "agent-memory-mcp System") {
-    System(mcpServer, "agent-memory-mcp Server", "Stdio MCP server providing memory capture, fingerprinting, retrieval, and verification")
+  System_Boundary(b1, "CoMemor System") {
+    System(mcpServer, "CoMemor Server", "Stdio MCP server providing memory capture, fingerprinting, retrieval, and verification")
     System(dashboard, "Memory Console UI & Bridge", "Local web dashboard (localhost:4321) for inspecting memory, audit trails, and approvals")
   }
 
@@ -35,7 +35,7 @@ C4Context
 
 ```mermaid
 C4Container
-  title Container Diagram — agent-memory-mcp
+  title Container Diagram — CoMemor
 
   Person(developer, "Developer")
   Container(host, "MCP Host (LLM Agent)", "TypeScript/Python", "Sends tool call requests via stdio")

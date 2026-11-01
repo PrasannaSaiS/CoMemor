@@ -1,13 +1,13 @@
 {
   "name": "agent-memory-dashboard-frontend",
   "version": "1.0.0",
-  "description": "Memory Console — observability dashboard for agent-memory-mcp. React + Vite frontend, talks only to the dashboard-bridge.",
+  "description": "Memory Console — observability dashboard for CoMemor. React + Vite frontend, talks only to the dashboard-bridge.",
   "type": "module",
   "license": "MIT",
   "author": "Prasanna Sai",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/PrasannaSaiS/agent-memory-mcp.git",
+    "url": "git+https://github.com/PrasannaSaiS/CoMemor.git",
     "directory": "dashboard/frontend"
   },
   "engines": {

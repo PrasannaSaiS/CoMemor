@@ -12,7 +12,7 @@
 
 ## Context
 
-`agent-memory-mcp` persists historical error traces, proposed fixes, explanations, and command recipes in `.agent-memory/records.jsonl`. When an agent encounters an error, it calls `find_fix`, which retrieves matching historical records and presents them to the LLM agent.
+`CoMemor` persists historical error traces, proposed fixes, explanations, and command recipes in `.agent-memory/records.jsonl`. When an agent encounters an error, it calls `find_fix`, which retrieves matching historical records and presents them to the LLM agent.
 
 This introduces a serious threat vector: **Persisted-Retrieval Poisoning** (also known as Indirect Prompt Injection via Long-Term Memory / Second-Order Tool Poisoning).
 

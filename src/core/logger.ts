@@ -1,5 +1,5 @@
 /**
- * Structured JSON Logger for agent-memory-mcp.
+ * Structured JSON Logger for CoMemor.
  * Directs logs to stderr AND .agent-memory/logs.jsonl.
  * NEVER writes to stdout (preserves MCP stdio JSON-RPC protocol framing).
  */

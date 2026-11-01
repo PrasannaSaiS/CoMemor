@@ -1,4 +1,4 @@
-﻿# Architecture — agent-memory-mcp
+﻿# Architecture — CoMemor
 
 **Version:** 0.1 (Phase 1 scaffold)
 **Date:** 2026-09-10
@@ -11,13 +11,13 @@
 
 ```mermaid
 C4Context
-  title System Context — agent-memory-mcp
+  title System Context — CoMemor
 
   Person(dev, "Developer / Operator", "Uses an AI coding agent (Cursor, Claude Desktop, etc.) to diagnose and fix build/test failures in a local repository.")
 
   System(agent, "AI Coding Agent (MCP Host)", "Drives the development workflow. Calls MCP tools to record failures and retrieve fixes.")
 
-  System_Boundary(memSys, "agent-memory-mcp System") {
+  System_Boundary(memSys, "CoMemor System") {
     System(mcpServer, "MCP Server", "Stdio JSON-RPC server. Records failures, retrieves fixes, verifies commands (dry-run default). Targets MCP spec 2026-07-28.")
     System(dashboard, "Memory Console (Dashboard)", "Separate local Node process. Observability UI for stored records, approval queue, security audit, and benchmark results.")
   }
@@ -39,7 +39,7 @@ C4Context
 
 ```mermaid
 C4Container
-  title Container Diagram — agent-memory-mcp
+  title Container Diagram — CoMemor
 
   Person(dev, "Developer / Operator")
   System_Ext(agent, "MCP Host / AI Agent")

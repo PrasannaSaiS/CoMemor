@@ -1,12 +1,12 @@
 # Developer & Agent Integration Guide
 
-> **Ecosystem:** `agent-memory-mcp`  
+> **Ecosystem:** `CoMemor`  
 > **Target MCP Specification:** `2026-07-28`  
 > **Audience:** Software Engineers, Tech Leads, AI Agents, and Platform Engineers  
 
 ---
 
-## 1. What is `agent-memory-mcp`?
+## 1. What is `CoMemor`?
 
 Modern AI coding agents (such as **Antigravity**, **Cursor**, **Claude Code**, **GitHub Copilot**, **Windsurf**, and **VS Code agents**) are remarkably proficient at writing code, but they suffer from **amnesia**:
 
@@ -14,7 +14,7 @@ Modern AI coding agents (such as **Antigravity**, **Cursor**, **Claude Code**, *
 2. **Harmful or Hallucinated Fixes:** Without historical guidance, agents often suggest destructive commands (`npm install --force`, `rm -rf node_modules`, `--no-verify`) or hallucinate incorrect configuration flags.
 3. **Siloed Knowledge:** One developer's AI agent might discover the fix for a subtle cross-platform path bug or a cryptic TypeScript error, but that knowledge is lost the moment the chat session ends.
 
-**`agent-memory-mcp`** solves this by providing a **repository-scoped, git-synchronized error-and-fix memory store** exposed through the open **Model Context Protocol (MCP)** standard.
+**`CoMemor`** solves this by providing a **repository-scoped, git-synchronized error-and-fix memory store** exposed through the open **Model Context Protocol (MCP)** standard.
 
 ---
 
@@ -24,21 +24,21 @@ A common question is: *"Does this run in parallel as a local background HTTP/net
 
 ### The Core Answer: **No network port is needed for the AI Agent!**
 
-`agent-memory-mcp` leverages the standard **MCP stdio transport**:
+`CoMemor` leverages the standard **MCP stdio transport**:
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
 │ Host IDE / Agent Process (Antigravity, Cursor, Claude Code, VS Code)    │
 │                                                                         │
 │   Spawns child process via stdin/stdout:                                │
-│     `node /path/to/agent-memory-mcp/dist/server.js`                     │
+│     `node /path/to/CoMemor/dist/server.js`                     │
 │                                                                         │
 │   Communicates over stdio using JSON-RPC 2.0                            │
 └────────────────────────────────────┬────────────────────────────────────┘
                                      │ JSON-RPC over stdio (zero network ports)
                                      ▼
 ┌─────────────────────────────────────────────────────────────────────────┐
-│ agent-memory-mcp Server Subprocess (Target: MCP 2026-07-28)             │
+│ CoMemor Server Subprocess (Target: MCP 2026-07-28)             │
 │                                                                         │
 │   • Evaluates inputs with strict Zod schemas                            │
 │   • Sanitizes secrets synchronously (Entropy + Regex)                   │
@@ -73,14 +73,14 @@ The **Memory Console Dashboard** is completely decoupled from the MCP server. It
 
 ## 3. Initial Project Repository Setup
 
-To enable your project to use `agent-memory-mcp`, follow these steps:
+To enable your project to use `CoMemor`, follow these steps:
 
-### Step 3.1: Build or Install `agent-memory-mcp`
+### Step 3.1: Build or Install `CoMemor`
 
 Clone or build the server on your system (or publish/install it to your local node environment):
 ```bash
-git clone https://github.com/PrasannaSaiS/agent-memory-mcp.git
-cd agent-memory-mcp
+git clone https://github.com/PrasannaSaiS/CoMemor.git
+cd CoMemor
 npm install
 npm run build
 ```
@@ -125,7 +125,7 @@ Add to your project's `.agents/mcp_config.json` (or global `~/.gemini/antigravit
   "mcpServers": {
     "agent-memory": {
       "command": "node",
-      "args": ["c:/Users/prasa/Projects/agent-memory-mcp/agent-memory-mcp/dist/server.js"],
+      "args": ["c:/Users/prasa/Projects/CoMemor/CoMemor/dist/server.js"],
       "env": {
         "AGENT_MEMORY_DIR": "${workspaceFolder}/.agent-memory",
         "AGENT_MEMORY_REPO": "${workspaceFolderBasename}"
@@ -142,7 +142,7 @@ Add to `~/.cursor/mcp.json` or `.cursor/mcp.json`:
   "mcpServers": {
     "agent-memory": {
       "command": "node",
-      "args": ["/absolute/path/to/agent-memory-mcp/dist/server.js"],
+      "args": ["/absolute/path/to/CoMemor/dist/server.js"],
       "env": {
         "AGENT_MEMORY_DIR": "${workspaceFolder}/.agent-memory",
         "AGENT_MEMORY_REPO": "${workspaceFolderBasename}"
@@ -155,7 +155,7 @@ Add to `~/.cursor/mcp.json` or `.cursor/mcp.json`:
 ### Configuration for Claude Code (CLI)
 Run in your shell:
 ```bash
-claude mcp add agent-memory -- node /absolute/path/to/agent-memory-mcp/dist/server.js
+claude mcp add agent-memory -- node /absolute/path/to/CoMemor/dist/server.js
 ```
 Or configure environment variables via your shell profile:
 ```bash
@@ -171,7 +171,7 @@ In `.vscode/mcp.json`:
     "agent-memory": {
       "type": "stdio",
       "command": "node",
-      "args": ["/absolute/path/to/agent-memory-mcp/dist/server.js"],
+      "args": ["/absolute/path/to/CoMemor/dist/server.js"],
       "env": {
         "AGENT_MEMORY_DIR": "${workspaceFolder}/.agent-memory",
         "AGENT_MEMORY_REPO": "my-project"
@@ -188,7 +188,7 @@ In `~/.config/claude/claude_desktop_config.json` (macOS/Linux) or `%APPDATA%\Cla
   "mcpServers": {
     "agent-memory": {
       "command": "node",
-      "args": ["C:/absolute/path/to/agent-memory-mcp/dist/server.js"],
+      "args": ["C:/absolute/path/to/CoMemor/dist/server.js"],
       "env": {
         "AGENT_MEMORY_DIR": "C:/Projects/my-project/.agent-memory",
         "AGENT_MEMORY_REPO": "my-project"
@@ -202,7 +202,7 @@ In `~/.config/claude/claude_desktop_config.json` (macOS/Linux) or `%APPDATA%\Cla
 
 ## 5. Teaching Your AI Agent the Safe Memory Workflow
 
-To make the AI agent work hand-in-hand with `agent-memory-mcp` automatically, include a rule in your project's agent guidelines (e.g., `AGENTS.md`, `.cursorrules`, or system instructions):
+To make the AI agent work hand-in-hand with `CoMemor` automatically, include a rule in your project's agent guidelines (e.g., `AGENTS.md`, `.cursorrules`, or system instructions):
 
 ```markdown
 # Agent Memory Guidelines
@@ -222,14 +222,14 @@ When a command fails (build, test, lint, or typecheck):
 
 ## 6. End-to-End Workflow in Action
 
-Here is the exact lifecycle of how an agent interacts with `agent-memory-mcp`:
+Here is the exact lifecycle of how an agent interacts with `CoMemor`:
 
 ```mermaid
 sequenceDiagram
     autonumber
     actor Developer
     participant Agent as AI Agent (IDE)
-    participant Memory as agent-memory-mcp
+    participant Memory as CoMemor
     participant Git as Git Repo (.agent-memory)
     actor Operator as Human Reviewer
 
@@ -286,12 +286,12 @@ When you want visual observability and an interactive human approval queue:
 
 1. Start the read-only bridge (runs on `127.0.0.1:4321`):
    ```bash
-   cd agent-memory-mcp/dashboard/bridge
+   cd CoMemor/dashboard/bridge
    npm run start
    ```
 2. Start the dashboard frontend:
    ```bash
-   cd agent-memory-mcp/dashboard/frontend
+   cd CoMemor/dashboard/frontend
    npm run dev
    ```
 3. Open `http://127.0.0.1:5173` in your browser to access:
@@ -309,7 +309,7 @@ When you want visual observability and an interactive human approval queue:
 
 | Step | Action | Frequency |
 | :--- | :--- | :--- |
-| **1. Server Build** | Run `npm run build` in `agent-memory-mcp` | Once per release |
+| **1. Server Build** | Run `npm run build` in `CoMemor` | Once per release |
 | **2. Host Config** | Add MCP config to your IDE (`mcp.json`) | Once per machine |
 | **3. Project Setup** | Create `.agent-memory/records.jsonl` and update `.gitignore` | Once per repo |
 | **4. Agent Rules** | Add workflow guidelines to project `AGENTS.md` | Once per repo |

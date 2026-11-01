@@ -8,7 +8,7 @@
 
 ## Context
 
-The agent-memory-mcp system provides a web-based management and inspection dashboard (Memory Console) for reviewing records, inspecting retrieval scores, managing approvals, and viewing audit/benchmark logs.
+The CoMemor system provides a web-based management and inspection dashboard (Memory Console) for reviewing records, inspecting retrieval scores, managing approvals, and viewing audit/benchmark logs.
 
 However:
 - The MCP server communicates with its host (e.g. Claude Desktop, Cursor) over `stdio`. Any network listeners, ports, or long-running HTTP server loops within the MCP server process increase attack surface and risk protocol deadlock or stdout corruption.

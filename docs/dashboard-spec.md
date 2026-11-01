@@ -25,7 +25,7 @@ Don't try to make Tier 2 replace Tier 1. Use Inspector for "does this tool call 
 MCP host/agent
    | JSON-RPC over stdio (stdout = protocol only)
    v
-agent-memory-mcp server (unchanged)
+CoMemor server (unchanged)
    +-- writes: .agent-memory/records.jsonl (source of truth)
    +-- writes: structured JSON logs to stderr AND to a local logs.jsonl file
    +-- writes: .agent-memory/pending-approvals.jsonl (verify_fix queue)

@@ -1,4 +1,4 @@
-# Retrieval Benchmark Results — agent-memory-mcp
+# Retrieval Benchmark Results — CoMemor
 
 **Date:** 2026-09-10  
 **Environment:** Node.js v24.11.0, Windows x64  

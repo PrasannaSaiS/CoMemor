@@ -1,6 +1,6 @@
 ﻿# .agent-memory
 
-This directory is the runtime data directory for the `agent-memory-mcp` server.
+This directory is the runtime data directory for the `CoMemor` server.
 
 ## Files
 

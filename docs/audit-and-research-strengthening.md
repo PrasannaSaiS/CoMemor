@@ -1,6 +1,6 @@
 # Agent Memory MCP — Audit & Research-Strengthening Addendum
 
-**Purpose:** This document supplements `agent-memory-mcp-project-plan.md` and `agent-memory-mcp-implementation-kit.md`. It records the audit findings, the recommended new research contribution, and a revised risk/scope posture. Feed this file to your coding agent alongside the original two documents at the start of Phase 0.
+**Purpose:** This document supplements `CoMemor-project-plan.md` and `CoMemor-implementation-kit.md`. It records the audit findings, the recommended new research contribution, and a revised risk/scope posture. Feed this file to your coding agent alongside the original two documents at the start of Phase 0.
 
 **Prepared:** 8 September 2026
 

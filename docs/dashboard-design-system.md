@@ -1,6 +1,6 @@
 # Agent Memory MCP — Dashboard Design System & Token Specification
 **Specification Version:** 1.0.0  
-**Target Surface:** Memory Console (Observability & Safety Dashboard for `agent-memory-mcp`)  
+**Target Surface:** Memory Console (Observability & Safety Dashboard for `CoMemor`)  
 **Design Philosophy:** Rigorous Engineering, Precision Telemetry, Defensible Safety, Zero Generic Clutter.
 
 ---

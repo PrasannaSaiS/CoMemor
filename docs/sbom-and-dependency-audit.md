@@ -8,8 +8,8 @@
 
 ## 1. Executive Summary
 
-This document provides the complete Software Bill of Materials (SBOM), dependency vulnerability audit, and supply-chain risk assessment for the `agent-memory-mcp` ecosystem, comprising:
-1. **`agent-memory-mcp`** (MCP server daemon over stdio)
+This document provides the complete Software Bill of Materials (SBOM), dependency vulnerability audit, and supply-chain risk assessment for the `CoMemor` ecosystem, comprising:
+1. **`CoMemor`** (MCP server daemon over stdio)
 2. **`agent-memory-dashboard-bridge`** (Read-only local bridge API on `127.0.0.1:3737`)
 3. **`agent-memory-dashboard-frontend`** (Static React/Vite dashboard client)
 
@@ -30,13 +30,13 @@ All dependencies have been pinned to exact or minimum safe versions. A dedicated
 ### 2.2 Mitigation & Pinned Version
 * **Pinned Version:** `@modelcontextprotocol/inspector` **`0.14.1`** (in `package.json` devDependencies).
 * **Patch Verification:** Version 0.14.1 incorporates mandatory per-session bearer tokens, strict HTTP `Origin`/`Host` header validation, and binds exclusively to `127.0.0.1` rather than wildcard interfaces.
-* **Server-Side Isolation:** The `agent-memory-mcp` server itself only accepts input via `process.stdin` and enforces strict Zod schema validation on every tool call, rendering unauthenticated external injection impossible through stdio.
+* **Server-Side Isolation:** The `CoMemor` server itself only accepts input via `process.stdin` and enforces strict Zod schema validation on every tool call, rendering unauthenticated external injection impossible through stdio.
 
 ---
 
 ## 3. Dependency Inventory & Supply Chain Analysis
 
-### 3.1 Core Server (`agent-memory-mcp`)
+### 3.1 Core Server (`CoMemor`)
 
 | Package | Version | Type | License | Justification & Risk Review |
 | :--- | :--- | :--- | :--- | :--- |

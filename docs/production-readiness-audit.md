@@ -1,4 +1,4 @@
-# Production Readiness Audit Report — agent-memory-mcp v1.0
+# Production Readiness Audit Report — CoMemor v1.0
 
 > **Audit Date:** September 20, 2026  
 > **Target Release:** v1.0.0  
@@ -486,7 +486,7 @@
       "error": "unsupported_node_version",
       "required": ">=22.5.0",
       "actual": "20.11.0",
-      "message": "agent-memory-mcp requires Node.js >= 22.5.0 (for built-in node:sqlite DatabaseSync). Current runtime is 20.11.0.",
+      "message": "CoMemor requires Node.js >= 22.5.0 (for built-in node:sqlite DatabaseSync). Current runtime is 20.11.0.",
       "timestamp": "..."
     }
     ```
@@ -515,7 +515,7 @@
       "error": "unsupported_node_version",
       "required": ">=22.5.0",
       "actual": "20.11.0",
-      "message": "agent-memory-mcp requires Node.js >= 22.5.0 (for built-in node:sqlite DatabaseSync). Current runtime is 20.11.0.",
+      "message": "CoMemor requires Node.js >= 22.5.0 (for built-in node:sqlite DatabaseSync). Current runtime is 20.11.0.",
       "timestamp": "..."
     }
     ```
@@ -538,13 +538,13 @@
 - **Requirement:** Verify all required fields in root and dashboard `package.json` files: `name`, `version`, `description`, `license` (MIT), `engines`, `bin`, `files`, `repository`, `homepage`, `bugs`. Verify `npm pack --dry-run` includes ONLY necessary files and excludes `.agent-memory/`, `tests/`, `scripts/`, temporary artifacts.
 - **Initial Finding:** Root `package.json` lacked `license`, `author`, `repository`, `bugs`, `homepage`, `bin`, and `files` array. Versions across packages were inconsistent (`0.1.0`).
 - **Remediation (FIXED):**
-  - Updated root `package.json` with target release version `1.0.0`, `license: "MIT"`, `author`, `repository`, `bugs`, `homepage`, `bin: { "agent-memory-mcp": "./dist/server.js" }`, and strict `files: ["dist", "README.md", "LICENSE"]`.
+  - Updated root `package.json` with target release version `1.0.0`, `license: "MIT"`, `author`, `repository`, `bugs`, `homepage`, `bin: { "CoMemor": "./dist/server.js" }`, and strict `files: ["dist", "README.md", "LICENSE"]`.
   - Added `#!/usr/bin/env node` shebang to `src/server.ts` line 1.
   - Updated `dashboard/bridge/package.json` and `dashboard/frontend/package.json` metadata and versions to `1.0.0`.
   - Resolved `uuid` vulnerability by upgrading from `11.1.0` to `11.1.1`.
 - **Evidence:** Ran `npm pack --dry-run`:
   ```text
-  package: agent-memory-mcp@1.0.0
+  package: CoMemor@1.0.0
   Tarball Contents:
   1.1kB LICENSE
   3.2kB README.md
@@ -670,7 +670,7 @@
 ================================================================================
 FINAL VERDICT: PASSED — READY FOR v1.0.0 PRODUCTION RELEASE
 ================================================================================
-Target Release:      agent-memory-mcp v1.0.0
+Target Release:      CoMemor v1.0.0
 MCP Spec Compliance: 2026-07-28
 Node Requirement:    >= 22.5.0 (for built-in node:sqlite DatabaseSync)
 Package Weight:      56.4 kB packed (101 files, zero tests/scratch in bundle)

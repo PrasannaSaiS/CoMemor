@@ -305,7 +305,7 @@ function DashboardShell(): ReactNode {
             </div>
             <div className="brand-meta">
               <span className="brand-title">Memory Console</span>
-              <span className="brand-subtitle mono">agent-memory-mcp &bull; v0.1.0</span>
+              <span className="brand-subtitle mono">CoMemor &bull; v0.1.0</span>
             </div>
           </div>
           <button

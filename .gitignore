@@ -1,4 +1,4 @@
-﻿# Runtime data (SQLite index is disposable and must not be committed)
+# Runtime data (SQLite index is disposable and must not be committed)
 .agent-memory/*.db
 .agent-memory/*.db-journal
 .agent-memory/*.db-wal
@@ -26,6 +26,10 @@ coverage/
 
 # Benchmark raw output (check in only final summarised results)
 scripts/benchmark-results-raw/
+dist-benchmark/
+
+# npm pack tarballs
+*.tgz
 
 # Editor
 .vscode/

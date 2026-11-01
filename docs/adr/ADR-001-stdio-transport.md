@@ -25,7 +25,7 @@ The spec still supports stdio transport as a first-class, officially-maintained 
 
 ### Rationale
 
-agent-memory-mcp is a **local, single-developer (or single-team) tool** run as a subprocess of a local MCP host. Evaluating each 2026-07-28 change:
+CoMemor is a **local, single-developer (or single-team) tool** run as a subprocess of a local MCP host. Evaluating each 2026-07-28 change:
 
 | 2026-07-28 change | Impact on this project |
 |---|---|

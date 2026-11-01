@@ -1,13 +1,13 @@
 {
   "name": "agent-memory-dashboard-bridge",
   "version": "1.0.0",
-  "description": "Read-only bridge between agent-memory-mcp data files and the dashboard frontend. Uses node:sqlite (built-in, no native build required).",
+  "description": "Read-only bridge between CoMemor data files and the dashboard frontend. Uses node:sqlite (built-in, no native build required).",
   "type": "module",
   "license": "MIT",
   "author": "Prasanna Sai",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/PrasannaSaiS/agent-memory-mcp.git",
+    "url": "git+https://github.com/PrasannaSaiS/CoMemor.git",
     "directory": "dashboard/bridge"
   },
   "engines": {

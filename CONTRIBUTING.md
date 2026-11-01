@@ -1,6 +1,6 @@
-# Contributing to agent-memory-mcp
+# Contributing to CoMemor
 
-Thank you for your interest in contributing to `agent-memory-mcp`! This project provides a repository-scoped, git-synced error-fix memory MCP server adhering to the Model Context Protocol specification.
+Thank you for your interest in contributing to `CoMemor`! This project provides a repository-scoped, git-synced error-fix memory MCP server adhering to the Model Context Protocol specification.
 
 ---
 
@@ -12,8 +12,8 @@ Thank you for your interest in contributing to `agent-memory-mcp`! This project 
 
 ```bash
 # Clone the repository
-git clone https://github.com/PrasannaSaiS/agent-memory-mcp.git
-cd agent-memory-mcp
+git clone https://github.com/PrasannaSaiS/CoMemor.git
+cd CoMemor
 
 # Install dependencies
 npm install

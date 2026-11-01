@@ -1,4 +1,4 @@
-# Security Policy — agent-memory-mcp
+# Security Policy — CoMemor
 
 ## 1. Supported Versions
 
@@ -13,9 +13,9 @@ We provide security updates and patches for the following versions:
 
 ## 2. Reporting a Vulnerability
 
-If you believe you have discovered a security vulnerability in `agent-memory-mcp`, please do **not** open a public issue. Disclose responsibly through one of the following channels:
+If you believe you have discovered a security vulnerability in `CoMemor`, please do **not** open a public issue. Disclose responsibly through one of the following channels:
 
-* **GitHub Security Advisory:** Submit a private vulnerability report via the [Security Advisories](https://github.com/PrasannaSaiS/agent-memory-mcp/security/advisories) tab.
+* **GitHub Security Advisory:** Submit a private vulnerability report via the [Security Advisories](https://github.com/PrasannaSaiS/CoMemor/security/advisories) tab.
 * **Direct Email:** Email the maintainer team at `security@agent-memory.dev` with details, proof-of-concept steps, and environment information.
 
 ### Response SLA & Timeline Commitments

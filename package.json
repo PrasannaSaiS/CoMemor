@@ -1,29 +1,30 @@
 {
-  "name": "agent-memory-mcp",
+  "name": "comemor",
   "version": "1.0.0",
-  "description": "Repository-scoped, git-synced error-fix memory MCP server. Targets MCP specification 2026-07-28.",
+  "description": "CoMemor — repository-scoped AI agent memory MCP server. Records errors and fixes, redacts secrets, and surfaces relevant context to your AI coding tools. Targets MCP specification 2026-07-28.",
   "type": "module",
   "license": "MIT",
   "author": "Prasanna Sai",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/PrasannaSaiS/agent-memory-mcp.git"
+    "url": "git+https://github.com/PrasannaSaiS/CoMemor.git"
   },
   "bugs": {
-    "url": "https://github.com/PrasannaSaiS/agent-memory-mcp/issues"
+    "url": "https://github.com/PrasannaSaiS/CoMemor/issues"
   },
-  "homepage": "https://github.com/PrasannaSaiS/agent-memory-mcp#readme",
+  "homepage": "https://github.com/PrasannaSaiS/CoMemor#readme",
   "engines": {
     "node": ">=22.5.0"
   },
   "main": "dist/server.js",
   "bin": {
-    "agent-memory-mcp": "./dist/server.js"
+    "comemor": "./dist/server.js"
   },
   "files": [
     "dist",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "CHANGELOG.md"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
@@ -65,5 +66,16 @@
     "prettier": "3.5.3",
     "typescript": "5.8.3",
     "vitest": "3.2.4"
-  }
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "ai-agent",
+    "memory",
+    "antigravity",
+    "cursor",
+    "claude",
+    "error-fix",
+    "agentic-development"
+  ]
 }

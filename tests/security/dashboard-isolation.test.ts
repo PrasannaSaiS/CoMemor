@@ -1,6 +1,6 @@
 /**
  * Security & Isolation Test Suite for Dashboard Bridge.
- * Phase 6 — agent-memory-mcp.
+ * Phase 6 — CoMemor.
  *
  * Invariants proven by this test suite:
  * 1. Zero Command Execution: The dashboard bridge does NOT import or execute
@@ -53,7 +53,7 @@ describe('Dashboard Process Isolation & Security Invariants', () => {
   afterEach(() => {
     try {
       fs.rmSync(tmpDir, { recursive: true, force: true });
-    } catch {}
+    } catch { }
   });
 
   // ─── 1. Static Audit: Zero Command Execution Invariant ────────────────────

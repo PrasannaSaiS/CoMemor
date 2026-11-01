@@ -8,7 +8,7 @@
 
 ## 1. Quality Gates & Verification Matrix
 
-Before tagging and releasing any version of `agent-memory-mcp`, every item in the following quality gate matrix MUST pass.
+Before tagging and releasing any version of `CoMemor`, every item in the following quality gate matrix MUST pass.
 
 | Gate | Verification Command | Required Outcome | Status |
 | :--- | :--- | :--- | :--- |
@@ -55,7 +55,7 @@ Before tagging and releasing any version of `agent-memory-mcp`, every item in th
 1. Commit all finalized files and ensure git working tree is clean.
 2. Tag release commit:
    ```bash
-   git tag -s v0.1.0 -m "Release v0.1.0: agent-memory-mcp"
+   git tag -s v0.1.0 -m "Release v0.1.0: CoMemor"
    ```
 3. Build all packages:
    ```bash

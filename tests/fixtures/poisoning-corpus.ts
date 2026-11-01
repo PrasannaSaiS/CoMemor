@@ -1,6 +1,6 @@
 /**
  * Red-team fixture corpus for persisted-retrieval poisoning tests.
- * Phase 5 — agent-memory-mcp.
+ * Phase 5 — CoMemor.
  *
  * Each fixture represents a planted record designed to poison a future agent
  * via find_fix. The corpus covers all 7 detector categories.
