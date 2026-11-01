@@ -1,4 +1,5 @@
-import { useState, useEffect, type ReactNode } from 'react';
+import { useState, useEffect, useCallback, type ReactNode } from 'react';
+import { BrowserRouter, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import type {
   MemoryStats,
   MemoryRecordSummary,
@@ -17,12 +18,84 @@ import { ApprovalQueueScreen } from './components/ApprovalQueueScreen.js';
 import { SecurityAuditScreen } from './components/SecurityAuditScreen.js';
 import { BenchmarkScreen } from './components/BenchmarkScreen.js';
 
+const screens = [
+  { key: 'overview', label: 'Overview' },
+  { key: 'feed', label: 'Live Activity' },
+  { key: 'records', label: 'Records' },
+  { key: 'explain', label: 'Explainability' },
+  { key: 'approvals', label: 'Approval Queue' },
+  { key: 'security', label: 'Security Audit' },
+  { key: 'benchmarks', label: 'Evaluation' },
+] as const;
+
+function IconMenu(): ReactNode {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="3" y1="12" x2="21" y2="12" />
+      <line x1="3" y1="6" x2="21" y2="6" />
+      <line x1="3" y1="18" x2="21" y2="18" />
+    </svg>
+  );
+}
+
+function IconSidebarClose(): ReactNode {
+  return (
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+      <line x1="9" y1="3" x2="9" y2="21" />
+      <polyline points="15 9 12 12 15 15" />
+    </svg>
+  );
+}
+
+function IconSidebarOpen(): ReactNode {
+  return (
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+      <line x1="9" y1="3" x2="9" y2="21" />
+      <polyline points="13 15 16 12 13 9" />
+    </svg>
+  );
+}
+
+function IconSun(): ReactNode {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="5" />
+      <line x1="12" y1="1" x2="12" y2="3" />
+      <line x1="12" y1="21" x2="12" y2="23" />
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+      <line x1="1" y1="12" x2="3" y2="12" />
+      <line x1="21" y1="12" x2="23" y2="12" />
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+    </svg>
+  );
+}
+
+function IconMoon(): ReactNode {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+    </svg>
+  );
+}
+
 export default function App(): ReactNode {
+  return (
+    <BrowserRouter>
+      <DashboardShell />
+    </BrowserRouter>
+  );
+}
+
+function DashboardShell(): ReactNode {
+  const navigate = useNavigate();
+  const location = useLocation();
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
     return (localStorage.getItem('agent-memory-theme') as 'dark' | 'light') || 'dark';
   });
-
-  const [activeScreen, setActiveScreen] = useState<string>('overview');
   const [stats, setStats] = useState<MemoryStats | null>(null);
   const [records, setRecords] = useState<MemoryRecordSummary[]>([]);
   const [approvals, setApprovals] = useState<PendingApproval[]>([]);
@@ -30,25 +103,50 @@ export default function App(): ReactNode {
   const [isStreaming, setIsStreaming] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState<boolean>(() => {
+    const saved = localStorage.getItem('agent-memory-sidebar-open');
+    return saved !== null ? saved === 'true' : true;
+  });
 
-  // Sync theme with document attribute and localStorage
+  const toggleSidebar = useCallback(() => {
+    setSidebarOpen((prev) => {
+      const next = !prev;
+      localStorage.setItem('agent-memory-sidebar-open', String(next));
+      return next;
+    });
+  }, []);
+
+  const activeScreen = location.pathname.replace('/', '') || 'overview';
+
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('agent-memory-theme', theme);
   }, [theme]);
 
-  const toggleTheme = () => {
-    setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
-  };
+  // Keyboard shortcut: Ctrl+B or Cmd+B to toggle sidebar
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b') {
+        e.preventDefault();
+        toggleSidebar();
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [toggleSidebar]);
 
-  // Initial data load
+  useEffect(() => {
+    setMobileNavOpen(false);
+  }, [location.pathname]);
+
   useEffect(() => {
     const loadAll = async () => {
       setIsLoading(true);
       setFetchError(null);
       try {
         await Promise.all([fetchStats(), fetchRecords(), fetchApprovals()]);
-      } catch (err) {
+      } catch {
         setFetchError('Failed to communicate with the local bridge server.');
       } finally {
         setIsLoading(false);
@@ -57,33 +155,24 @@ export default function App(): ReactNode {
 
     loadAll();
 
-    // Setup SSE connection
     let eventSource: EventSource | null = null;
     try {
       eventSource = new EventSource('/api/events');
-
-      eventSource.onopen = () => {
-        setIsStreaming(true);
-      };
-
+      eventSource.onopen = () => setIsStreaming(true);
       eventSource.onmessage = (e) => {
         try {
           const parsed = JSON.parse(e.data) as LogEvent;
           setEvents((prev) => [...prev, parsed].slice(-200));
-
           if (parsed.event?.includes('record') || parsed.event?.includes('verify')) {
-            fetchStats();
-            fetchRecords();
-            fetchApprovals();
+            void fetchStats();
+            void fetchRecords();
+            void fetchApprovals();
           }
         } catch {
-          // ignore non-json ping messages
+          // ignore non-json ping or keepalive messages
         }
       };
-
-      eventSource.onerror = () => {
-        setIsStreaming(false);
-      };
+      eventSource.onerror = () => setIsStreaming(false);
     } catch {
       setIsStreaming(false);
     }
@@ -152,9 +241,10 @@ export default function App(): ReactNode {
     return false;
   };
 
-  const handleFetchExplainability = async (): Promise<ExplainabilityData | null> => {
+  const handleFetchExplainability = async (query?: string): Promise<ExplainabilityData | null> => {
     try {
-      const res = await fetch('/api/explainability');
+      const url = query ? `/api/explainability?query=${encodeURIComponent(query)}` : '/api/explainability';
+      const res = await fetch(url);
       if (res.ok) return await res.json();
     } catch (e) {
       console.warn('Failed to fetch explainability data:', e);
@@ -182,100 +272,98 @@ export default function App(): ReactNode {
     return null;
   };
 
+  const routeTo = (screen: string) => {
+    navigate(`/${screen}`);
+  };
+
+  /* Icon src swaps with theme */
+  const mcpIconSrc = theme === 'dark' ? '/mcp-icon-white.png' : '/mcp-icon-black.png';
+
   return (
-    <div className="app-container">
-      {/* Precision Top Navigation */}
-      <header className="top-nav">
+    <div className={`app-container ${sidebarOpen ? 'sidebar-expanded' : 'sidebar-collapsed'}`}>
+      <button
+        className="mobile-nav-toggle"
+        type="button"
+        aria-label="Toggle navigation"
+        onClick={() => setMobileNavOpen((prev) => !prev)}
+      >
+        <IconMenu />
+      </button>
+      <div className={`nav-overlay ${mobileNavOpen ? 'open' : ''}`} onClick={() => setMobileNavOpen(false)} />
+
+      <aside className={`side-nav ${sidebarOpen ? 'open' : 'collapsed'} ${mobileNavOpen ? 'mobile-open' : ''}`}>
         <div className="brand-section">
-          <div className="brand-icon-box" title="Agent Memory Observability Console">
-            ⚡
+          <div className="brand-main">
+            <div className="brand-icon-box" title="Agent Memory Observability Console">
+              <img
+                src={mcpIconSrc}
+                alt="MCP"
+                width={22}
+                height={22}
+                style={{ display: 'block', objectFit: 'contain' }}
+              />
+            </div>
+            <div className="brand-meta">
+              <span className="brand-title">Memory Console</span>
+              <span className="brand-subtitle mono">agent-memory-mcp &bull; v0.1.0</span>
+            </div>
           </div>
-          <div className="brand-meta">
-            <span className="brand-title">Memory Console</span>
-            <span className="brand-subtitle mono">agent-memory-mcp • v0.1.0</span>
-          </div>
+          <button
+            type="button"
+            className="sidebar-collapse-btn desktop-only"
+            onClick={toggleSidebar}
+            title="Collapse sidebar (Ctrl+B)"
+            aria-label="Collapse sidebar"
+          >
+            <IconSidebarClose />
+          </button>
         </div>
 
-        {/* Segmented Navigation Tab Bar */}
         <nav className="nav-links" role="tablist" aria-label="Dashboard views">
-          <button
-            id="nav-tab-overview"
-            role="tab"
-            aria-selected={activeScreen === 'overview'}
-            className={`nav-tab ${activeScreen === 'overview' ? 'active' : ''}`}
-            onClick={() => setActiveScreen('overview')}
-          >
-            Overview
-          </button>
+          {screens.map((item) => {
+            const isActive = activeScreen === item.key;
+            const badgeCount =
+              item.key === 'feed'
+                ? events.length
+                : item.key === 'records'
+                  ? records.length
+                  : item.key === 'approvals'
+                    ? approvals.length
+                    : item.key === 'security'
+                      ? stats?.quarantinedCount ?? 0
+                      : 0;
 
-          <button
-            id="nav-tab-feed"
-            role="tab"
-            aria-selected={activeScreen === 'feed'}
-            className={`nav-tab ${activeScreen === 'feed' ? 'active' : ''}`}
-            onClick={() => setActiveScreen('feed')}
-          >
-            Live Activity
-            {events.length > 0 && <span className="nav-badge cyan">{events.length}</span>}
-          </button>
-
-          <button
-            id="nav-tab-records"
-            role="tab"
-            aria-selected={activeScreen === 'records'}
-            className={`nav-tab ${activeScreen === 'records' ? 'active' : ''}`}
-            onClick={() => setActiveScreen('records')}
-          >
-            Records
-            {records.length > 0 && <span className="nav-badge gray">{records.length}</span>}
-          </button>
-
-          <button
-            id="nav-tab-explain"
-            role="tab"
-            aria-selected={activeScreen === 'explain'}
-            className={`nav-tab ${activeScreen === 'explain' ? 'active' : ''}`}
-            onClick={() => setActiveScreen('explain')}
-          >
-            Explainability
-          </button>
-
-          <button
-            id="nav-tab-approvals"
-            role="tab"
-            aria-selected={activeScreen === 'approvals'}
-            className={`nav-tab ${activeScreen === 'approvals' ? 'active' : ''}`}
-            onClick={() => setActiveScreen('approvals')}
-          >
-            Approval Queue
-            {approvals.length > 0 && <span className="nav-badge warning">{approvals.length}</span>}
-          </button>
-
-          <button
-            id="nav-tab-security"
-            role="tab"
-            aria-selected={activeScreen === 'security'}
-            className={`nav-tab ${activeScreen === 'security' ? 'active' : ''}`}
-            onClick={() => setActiveScreen('security')}
-          >
-            Security Audit
-            {stats && stats.quarantinedCount > 0 && (
-              <span className="nav-badge danger">{stats.quarantinedCount}</span>
-            )}
-          </button>
-
-          <button
-            id="nav-tab-benchmarks"
-            role="tab"
-            aria-selected={activeScreen === 'benchmarks'}
-            className={`nav-tab ${activeScreen === 'benchmarks' ? 'active' : ''}`}
-            onClick={() => setActiveScreen('benchmarks')}
-          >
-            Evaluation
-          </button>
+            return (
+              <button
+                key={item.key}
+                id={`nav-tab-${item.key}`}
+                role="tab"
+                aria-selected={isActive}
+                className={`nav-tab ${isActive ? 'active' : ''}`}
+                onClick={() => routeTo(item.key)}
+              >
+                {item.label}
+                {badgeCount > 0 && (
+                  <span
+                    className={`nav-badge ${item.key === 'approvals'
+                      ? 'warning'
+                      : item.key === 'security'
+                        ? 'danger'
+                        : item.key === 'feed'
+                          ? 'cyan'
+                          : item.key === 'records'
+                            ? 'gray'
+                            : ''
+                      }`}
+                  >
+                    {badgeCount}
+                  </span>
+                )}
+              </button>
+            );
+          })}
         </nav>
 
-        {/* Nav Actions: Status Badge & Theme Switcher */}
         <div className="nav-actions">
           <div className="status-badge" title="SSE Bridge Pipeline Status">
             <span
@@ -289,17 +377,63 @@ export default function App(): ReactNode {
 
           <button
             className="theme-toggle-btn"
-            onClick={toggleTheme}
+            onClick={() => setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'))}
             title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`}
             aria-label="Toggle visual theme"
           >
-            {theme === 'dark' ? '☀' : '☾'}
+            {theme === 'dark' ? <IconSun /> : <IconMoon />}
+            <span style={{ fontSize: '0.75rem', marginLeft: '0.3rem' }}>
+              {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+            </span>
           </button>
         </div>
-      </header>
+      </aside>
 
-      {/* Main Screen Content View */}
       <main className="main-content">
+        <header className="top-header-bar">
+          <div className="top-header-left">
+            {!sidebarOpen && (
+              <button
+                type="button"
+                className="sidebar-toggle-btn desktop-only"
+                onClick={toggleSidebar}
+                title="Expand sidebar (Ctrl+B)"
+                aria-label="Expand sidebar"
+              >
+                <IconSidebarOpen />
+              </button>
+            )}
+            <div className="breadcrumb-trail">
+              <span className="breadcrumb-root">Memory Console</span>
+              <span className="breadcrumb-separator">/</span>
+              <span className="breadcrumb-current">
+                {screens.find((s) => s.key === activeScreen)?.label || 'Overview'}
+              </span>
+            </div>
+          </div>
+
+          <div className="top-header-right">
+            <div className="status-badge-inline" title="Bridge Status">
+              <span
+                className="pulse-dot"
+                style={{
+                  background: isStreaming ? 'var(--status-success)' : 'var(--status-warning)',
+                }}
+              />
+              <span className="mono" style={{ fontSize: '0.74rem' }}>
+                {isStreaming ? '127.0.0.1:4321' : 'Disconnected'}
+              </span>
+            </div>
+            <button
+              className="theme-toggle-btn-compact"
+              onClick={() => setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'))}
+              title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`}
+              aria-label="Toggle visual theme"
+            >
+              {theme === 'dark' ? <IconSun /> : <IconMoon />}
+            </button>
+          </div>
+        </header>
         {fetchError && (
           <div className="error-banner">
             <div>
@@ -309,9 +443,9 @@ export default function App(): ReactNode {
               className="btn btn-outline"
               style={{ padding: '0.25rem 0.6rem', fontSize: '0.75rem' }}
               onClick={() => {
-                fetchStats();
-                fetchRecords();
-                fetchApprovals();
+                void fetchStats();
+                void fetchRecords();
+                void fetchApprovals();
               }}
             >
               Retry
@@ -319,37 +453,31 @@ export default function App(): ReactNode {
           </div>
         )}
 
-        {activeScreen === 'overview' && (
-          <OverviewScreen
-            stats={stats}
-            isLoading={isLoading}
-            onNavigate={(screen) => setActiveScreen(screen)}
+        <Routes>
+          <Route path="/" element={<Navigate to="/overview" replace />} />
+          <Route
+            path="/overview"
+            element={<OverviewScreen stats={stats} isLoading={isLoading} onNavigate={routeTo} />}
           />
-        )}
-        {activeScreen === 'feed' && (
-          <LiveFeedScreen events={events} isStreaming={isStreaming} onClear={() => setEvents([])} />
-        )}
-        {activeScreen === 'records' && (
-          <RecordBrowserScreen
-            records={records}
-            isLoading={isLoading}
-            onFetchDetail={handleFetchRecordDetail}
+          <Route
+            path="/feed"
+            element={<LiveFeedScreen events={events} isStreaming={isStreaming} onClear={() => setEvents([])} />}
           />
-        )}
-        {activeScreen === 'explain' && (
-          <ExplainabilityScreen onFetchExplainability={handleFetchExplainability} />
-        )}
-        {activeScreen === 'approvals' && (
-          <ApprovalQueueScreen
-            approvals={approvals}
-            isLoading={isLoading}
-            onDecision={handleDecision}
+          <Route
+            path="/records"
+            element={<RecordBrowserScreen records={records} isLoading={isLoading} onFetchDetail={handleFetchRecordDetail} />}
           />
-        )}
-        {activeScreen === 'security' && <SecurityAuditScreen onFetchAudit={handleFetchAudit} />}
-        {activeScreen === 'benchmarks' && (
-          <BenchmarkScreen onFetchBenchmarks={handleFetchBenchmarks} />
-        )}
+          <Route
+            path="/explain"
+            element={<ExplainabilityScreen onFetchExplainability={handleFetchExplainability} />}
+          />
+          <Route
+            path="/approvals"
+            element={<ApprovalQueueScreen approvals={approvals} isLoading={isLoading} onDecision={handleDecision} />}
+          />
+          <Route path="/security" element={<SecurityAuditScreen onFetchAudit={handleFetchAudit} />} />
+          <Route path="/benchmarks" element={<BenchmarkScreen onFetchBenchmarks={handleFetchBenchmarks} />} />
+        </Routes>
       </main>
     </div>
   );

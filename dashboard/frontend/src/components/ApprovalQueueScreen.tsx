@@ -1,10 +1,19 @@
 import { useState, type ReactNode } from 'react';
 import type { PendingApproval } from '../types.js';
+import { ConfirmButton } from './shared/ConfirmButton.js';
 
 interface Props {
   approvals: PendingApproval[];
   isLoading?: boolean;
   onDecision: (id: string, decision: 'approve' | 'deny', notes?: string) => Promise<boolean>;
+}
+
+function IconShield(): ReactNode {
+  return (
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+    </svg>
+  );
 }
 
 export function ApprovalQueueScreen({ approvals, isLoading, onDecision }: Props): ReactNode {
@@ -14,12 +23,14 @@ export function ApprovalQueueScreen({ approvals, isLoading, onDecision }: Props)
   const handleAction = async (id: string, decision: 'approve' | 'deny') => {
     setIsSubmitting(id);
     try {
-      await onDecision(id, decision, operatorNotes[id]);
-      setOperatorNotes((prev) => {
-        const copy = { ...prev };
-        delete copy[id];
-        return copy;
-      });
+      const ok = await onDecision(id, decision, operatorNotes[id]);
+      if (ok) {
+        setOperatorNotes((prev) => {
+          const copy = { ...prev };
+          delete copy[id];
+          return copy;
+        });
+      }
     } finally {
       setIsSubmitting(null);
     }
@@ -30,7 +41,7 @@ export function ApprovalQueueScreen({ approvals, isLoading, onDecision }: Props)
       case 'HIGH':
         return <span className="badge rose">HIGH RISK LEVEL</span>;
       case 'MEDIUM':
-        return <span className="badge amber">MEDIUM RISK LEVEL</span>;
+        return <span className="badge gray">MEDIUM RISK LEVEL</span>;
       case 'LOW':
       default:
         return <span className="badge emerald">LOW RISK LEVEL</span>;
@@ -73,10 +84,12 @@ export function ApprovalQueueScreen({ approvals, isLoading, onDecision }: Props)
       {approvals.length === 0 ? (
         <div className="panel">
           <div className="empty-state">
-            <div className="empty-state-icon">🛡️</div>
+            <div className="empty-state-icon">
+              <IconShield />
+            </div>
             <h2 className="empty-state-title">Approval Queue Clean</h2>
             <p className="empty-state-desc">
-              Zero execution authorizations are pending. When an agent calls `verify_fix` with a non-allowlisted command or high-risk shell arguments, the execution barrier intercepts it here for operator authorization.
+              Zero execution authorizations are pending. When an agent calls verify_fix with a non-allowlisted command or high-risk shell arguments, the execution barrier intercepts it here for operator authorization.
             </p>
             <div style={{ marginTop: '1.25rem' }}>
               <span className="badge emerald">Dry-Run Protection Active</span>
@@ -84,105 +97,72 @@ export function ApprovalQueueScreen({ approvals, isLoading, onDecision }: Props)
           </div>
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+        <div className="approval-list">
           {approvals.map((appr) => {
             const isHighRisk = appr.risk.level.toUpperCase() === 'HIGH';
+            const isSubmittingThis = isSubmitting === appr.approvalId;
 
             return (
               <div
                 key={appr.approvalId}
-                className="panel"
+                className="panel approval-card"
                 style={{
-                  borderLeft: isHighRisk
-                    ? '4px solid var(--status-danger)'
-                    : '4px solid var(--status-warning)',
-                  padding: '1.35rem 1.5rem',
+                  borderLeft: isHighRisk ? '4px solid var(--status-danger)' : '4px solid var(--status-warning)',
                 }}
               >
-                {/* Header Row */}
-                <div
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'flex-start',
-                    marginBottom: '1rem',
-                    flexWrap: 'wrap',
-                    gap: '0.75rem',
-                  }}
-                >
+                <div className="approval-header">
                   <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '0.25rem' }}>
-                      <span className="mono" style={{ fontWeight: 700, fontSize: '0.98rem', color: 'var(--accent-cyan)' }}>
-                        {appr.approvalId}
-                      </span>
+                    <div className="approval-meta-row">
+                      <span className="mono approval-id">{appr.approvalId}</span>
                       {getRiskBadge(appr.risk.level)}
                       {appr.recordId && <span className="mono badge gray">Ref Record: {appr.recordId}</span>}
                     </div>
-                    <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>
+                    <div className="approval-timestamp">
                       Intercepted: {new Date(appr.createdAt).toLocaleString()} • Status: <span className="mono">{appr.status}</span>
                     </div>
                   </div>
 
-                  {/* Decision Controls */}
-                  <div style={{ display: 'flex', gap: '0.65rem' }}>
-                    <button
-                      id={`deny-btn-${appr.approvalId}`}
-                      className="btn btn-danger"
-                      disabled={isSubmitting === appr.approvalId}
-                      onClick={() => handleAction(appr.approvalId, 'deny')}
-                      aria-label={`Deny command for ${appr.approvalId}`}
+                  <div className="approval-actions">
+                    <ConfirmButton
+                      confirmLabel="Deny"
+                      confirmText="Confirm deny?"
+                      variant="danger"
+                      disabled={isSubmittingThis}
+                      onConfirm={() => handleAction(appr.approvalId, 'deny')}
                     >
-                      {isSubmitting === appr.approvalId ? 'Submitting…' : 'Deny & Terminate'}
-                    </button>
+                      {isSubmittingThis ? 'Submitting…' : 'Deny & Terminate'}
+                    </ConfirmButton>
 
-                    <button
-                      id={`approve-btn-${appr.approvalId}`}
-                      className="btn btn-success"
-                      disabled={isSubmitting === appr.approvalId}
-                      onClick={() => handleAction(appr.approvalId, 'approve')}
-                      aria-label={`Authorize live execution for ${appr.approvalId}`}
+                    <ConfirmButton
+                      confirmLabel="Approve"
+                      confirmText="Confirm authorize?"
+                      variant="success"
+                      disabled={isSubmittingThis}
+                      onConfirm={() => handleAction(appr.approvalId, 'approve')}
                     >
-                      {isSubmitting === appr.approvalId ? 'Authorizing…' : 'Authorize Execution'}
-                    </button>
+                      {isSubmittingThis ? 'Authorizing…' : 'Authorize Execution'}
+                    </ConfirmButton>
                   </div>
                 </div>
 
-                {/* Dry-Run Requested Command Plan */}
                 <div style={{ marginBottom: '0.85rem' }}>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', marginBottom: '0.35rem' }}>
-                    Intercepted Command Plan:
-                  </div>
-                  <div className="code-block mono" style={{ fontSize: '0.85rem', color: 'var(--text-primary)' }}>
-                    $ {appr.requestedCommand}
-                  </div>
+                  <div className="mini-label">Intercepted Command Plan:</div>
+                  <div className="code-block mono approval-command">$ {appr.requestedCommand}</div>
                 </div>
 
-                {/* Risk Reasons & Safety Assessment */}
                 <div style={{ marginBottom: '1rem' }}>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', marginBottom: '0.35rem' }}>
-                    Security Policy Findings:
-                  </div>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.45rem' }}>
+                  <div className="mini-label">Security Policy Findings:</div>
+                  <div className="risk-badges">
                     {appr.risk.reasons.map((r, i) => (
-                      <span key={i} className={`badge ${isHighRisk ? 'rose' : 'amber'}`}>
-                        ⚠ {r}
+                      <span key={i} className={`badge ${isHighRisk ? 'rose' : 'gray'}`}>
+                        {r}
                       </span>
                     ))}
                   </div>
                 </div>
 
-                {/* Operator Audit Notes Input */}
                 <div>
-                  <label
-                    htmlFor={`notes-${appr.approvalId}`}
-                    style={{
-                      display: 'block',
-                      fontSize: '0.74rem',
-                      color: 'var(--text-muted)',
-                      marginBottom: '0.3rem',
-                      fontWeight: 500,
-                    }}
-                  >
+                  <label htmlFor={`notes-${appr.approvalId}`} className="field-label">
                     Operator Audit Notes (logged immutably to approvals-resolved.jsonl):
                   </label>
                   <input
@@ -191,9 +171,7 @@ export function ApprovalQueueScreen({ approvals, isLoading, onDecision }: Props)
                     className="input"
                     placeholder="Enter justification or review comments prior to decision..."
                     value={operatorNotes[appr.approvalId] || ''}
-                    onChange={(e) =>
-                      setOperatorNotes({ ...operatorNotes, [appr.approvalId]: e.target.value })
-                    }
+                    onChange={(e) => setOperatorNotes((prev) => ({ ...prev, [appr.approvalId]: e.target.value }))}
                     style={{ width: '100%' }}
                   />
                 </div>

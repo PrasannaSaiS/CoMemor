@@ -206,7 +206,7 @@ export class BridgeStorage {
       let parsedData: {
         verification?: { wilsonLowerBound?: number; status?: string };
         fix?: { explanation?: string; commands?: string[] };
-        poisoningFlag?: unknown;
+        poisoningFlag?: { raisedAt: string; reason: string; status: 'reviewed' | 'dismissed' | 'confirmed' } | null;
         provenance?: unknown;
       } = {};
       try {

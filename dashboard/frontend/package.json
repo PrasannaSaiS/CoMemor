@@ -22,8 +22,11 @@
     "format:check": "prettier --check \"src/**/*.{ts,tsx}\""
   },
   "dependencies": {
+    "@tanstack/react-virtual": "^3.14.13",
+    "lucide-react": "^1.47.0",
     "react": "19.1.0",
     "react-dom": "19.1.0",
+    "react-router-dom": "^7.18.4",
     "recharts": "2.15.3"
   },
   "devDependencies": {

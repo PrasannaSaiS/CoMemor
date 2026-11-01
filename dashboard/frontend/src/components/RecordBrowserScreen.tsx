@@ -8,6 +8,15 @@ interface Props {
   onFetchDetail: (id: string) => Promise<FullMemoryRecord | null>;
 }
 
+function IconSearch(): ReactNode {
+  return (
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="11" cy="11" r="8" />
+      <line x1="21" y1="21" x2="16.65" y2="16.65" />
+    </svg>
+  );
+}
+
 export function RecordBrowserScreen({ records, isLoading, onFetchDetail }: Props): ReactNode {
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [familyFilter, setFamilyFilter] = useState<string>('all');
@@ -160,7 +169,9 @@ export function RecordBrowserScreen({ records, isLoading, onFetchDetail }: Props
                 <tr>
                   <td colSpan={8} style={{ padding: '3.5rem 1.5rem' }}>
                     <div className="empty-state">
-                      <div className="empty-state-icon">🔍</div>
+                      <div className="empty-state-icon">
+                        <IconSearch />
+                      </div>
                       <h2 className="empty-state-title">No Matching Memory Records</h2>
                       <p className="empty-state-desc">
                         {records.length === 0
@@ -180,7 +191,7 @@ export function RecordBrowserScreen({ records, isLoading, onFetchDetail }: Props
                     onKeyDown={(e) => e.key === 'Enter' && handleRowClick(r.id)}
                   >
                     <td>
-                      <span className="mono" style={{ fontWeight: 600, color: 'var(--accent-cyan)' }}>
+                      <span className="mono" style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
                         {r.id}
                       </span>
                     </td>
@@ -190,7 +201,7 @@ export function RecordBrowserScreen({ records, isLoading, onFetchDetail }: Props
                       </code>
                     </td>
                     <td>
-                      <span className="badge violet">{r.commandFamily}</span>
+                      <span className="badge gray">{r.commandFamily}</span>
                     </td>
                     <td>
                       <span className="mono" style={{ fontSize: '0.74rem', color: 'var(--text-secondary)' }}>

@@ -1,5 +1,6 @@
-import type { ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import type { MemoryStats } from '../types.js';
+import { InfoButton } from './shared/InfoTooltip.js';
 
 interface Props {
   stats: MemoryStats | null;
@@ -7,20 +8,78 @@ interface Props {
   onNavigate: (screen: string) => void;
 }
 
+
+/* ── Subsystem status row ────────────────────────────────────────── */
+interface SubsystemRowProps {
+  title: string;
+  description: string;
+  tags: { label: string; variant: string }[];
+  info: ReactNode;
+}
+
+function SubsystemRow({ title, description, tags, info }: SubsystemRowProps): ReactNode {
+  return (
+    <div className="subsystem-row">
+      <div className="subsystem-row-header">
+        <span className="subsystem-row-title">
+          {title}
+          <InfoButton content={info} size="sm" />
+        </span>
+        <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+          {tags.map((t) => (
+            <span key={t.label} className={`badge ${t.variant}`}>
+              {t.label}
+            </span>
+          ))}
+        </div>
+      </div>
+      <div className="subsystem-row-desc">{description}</div>
+    </div>
+  );
+}
+
+/* ── SVG icons for empty / status ───────────────────────────────── */
+function IconShield(): ReactNode {
+  return (
+    <svg
+      width="32"
+      height="32"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      style={{ opacity: 0.4 }}
+    >
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+    </svg>
+  );
+}
+
+function IconCheck(): ReactNode {
+  return (
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+      <polyline points="2 6 5 9 10 3" />
+    </svg>
+  );
+}
+
+/* ── Main component ─────────────────────────────────────────────── */
 export function OverviewScreen({ stats, isLoading, onNavigate }: Props): ReactNode {
   if (isLoading) {
     return (
       <div>
         <div className="screen-header">
           <div className="skeleton-box" style={{ width: '240px', height: '28px', marginBottom: '8px' }} />
-          <div className="skeleton-box" style={{ width: '480px', height: '16px' }} />
+          <div className="skeleton-box" style={{ width: '380px', height: '16px' }} />
         </div>
         <div className="stat-hero-grid">
-          <div className="skeleton-box" style={{ height: '140px' }} />
-          <div className="skeleton-box" style={{ height: '140px' }} />
-          <div className="skeleton-box" style={{ height: '140px' }} />
+          <div className="skeleton-box" style={{ height: '130px' }} />
+          <div className="skeleton-box" style={{ height: '130px' }} />
+          <div className="skeleton-box" style={{ height: '130px' }} />
         </div>
-        <div className="panel" style={{ height: '220px' }}>
+        <div className="panel" style={{ height: '200px' }}>
           <div className="skeleton-box" style={{ height: '100%' }} />
         </div>
       </div>
@@ -32,17 +91,16 @@ export function OverviewScreen({ stats, isLoading, onNavigate }: Props): ReactNo
       <div>
         <div className="screen-header">
           <h1 className="screen-title">System Overview</h1>
-          <p className="screen-subtitle">
-            Real-time memory state, Wilson-score confidence lower bounds, and integrity telemetry.
-          </p>
         </div>
         <div className="panel">
           <div className="empty-state">
-            <div className="empty-state-icon">🛡️</div>
+            <div className="empty-state-icon">
+              <IconShield />
+            </div>
             <h2 className="empty-state-title">No Memory Telemetry Active</h2>
             <p className="empty-state-desc">
-              The agent memory system has not initialized records yet. Once tool calls (`record_failure`
-              or `find_fix`) are received from an MCP client, telemetry will populate here.
+              No records yet. Once an MCP client calls <code>record_failure</code> or{' '}
+              <code>find_fix</code>, telemetry will populate here.
             </p>
           </div>
         </div>
@@ -65,21 +123,20 @@ export function OverviewScreen({ stats, isLoading, onNavigate }: Props): ReactNo
     <div>
       <div className="screen-header">
         <div className="screen-title-row">
-          <div>
-            <h1 className="screen-title">System Overview</h1>
-            <p className="screen-subtitle">
-              High-integrity telemetry, Wilson-score statistical confidence bounds, and real-time defense posture.
-            </p>
-          </div>
-          <div className="badge emerald" style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem' }}>
-            ● System State: Nominally Guarded
+          <h1 className="screen-title">System Overview</h1>
+          <div
+            className={`badge ${hasQuarantine ? 'rose' : 'emerald'}`}
+            style={{ padding: '0.32rem 0.7rem', fontSize: '0.78rem', alignSelf: 'flex-start' }}
+          >
+            <IconCheck />
+            {hasQuarantine ? 'Action Required' : 'System Nominal'}
           </div>
         </div>
       </div>
 
-      {/* Primary Hero Metrics: Prioritizing numbers that matter */}
+      {/* ── Primary Hero Metrics ── */}
       <div className="stat-hero-grid">
-        {/* 1. Poisoning / Quarantine Flags */}
+        {/* 1. Quarantine / Poisoning */}
         <div
           className={`stat-hero-card ${hasQuarantine ? 'rose' : 'emerald'}`}
           onClick={() => onNavigate('security')}
@@ -90,9 +147,25 @@ export function OverviewScreen({ stats, isLoading, onNavigate }: Props): ReactNo
           onKeyDown={(e) => e.key === 'Enter' && onNavigate('security')}
         >
           <div className="stat-label">
-            <span>Poisoning / Quarantine Flags</span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+              Quarantine Flags
+              <InfoButton
+                content={
+                  <>
+                    <strong>Quarantine Flags</strong>
+
+                    Count of memories isolated due to suspected prompt-injection or adversarial content.
+                    A non-zero value requires immediate review in the <em>Security Audit</em> tab.
+                    <br />
+                    <span style={{ color: 'var(--text-muted)', fontSize: '0.75em' }}>
+                      Example: a memory containing <code>{"</s>[INST]"}</code> would trigger quarantine.
+                    </span>
+                  </>
+                }
+              />
+            </span>
             <span className={`badge ${hasQuarantine ? 'rose' : 'emerald'}`}>
-              {hasQuarantine ? 'ACTION REQUIRED' : 'ZERO DETECTED'}
+              {hasQuarantine ? 'ACTION REQUIRED' : 'CLEAN'}
             </span>
           </div>
           <div
@@ -103,14 +176,14 @@ export function OverviewScreen({ stats, isLoading, onNavigate }: Props): ReactNo
           </div>
           <div className="stat-subtext">
             {hasQuarantine
-              ? 'Malicious or prompt-injected memories isolated from retrieval.'
-              : 'All candidate memories verified free of adversarial prompt injections.'}
+              ? 'Isolated memories blocked from retrieval. Click to review.'
+              : 'No adversarial memories detected.'}
           </div>
         </div>
 
-        {/* 2. Stale Warnings */}
+        {/* 2. Stale Drift */}
         <div
-          className={`stat-hero-card ${hasStale ? 'amber' : 'cyan'}`}
+          className={`stat-hero-card ${hasStale ? 'amber' : ''}`}
           onClick={() => onNavigate('records')}
           style={{ cursor: 'pointer' }}
           role="button"
@@ -119,38 +192,71 @@ export function OverviewScreen({ stats, isLoading, onNavigate }: Props): ReactNo
           onKeyDown={(e) => e.key === 'Enter' && onNavigate('records')}
         >
           <div className="stat-label">
-            <span>Stale Drift Warnings</span>
-            <span className={`badge ${hasStale ? 'amber' : 'cyan'}`}>
-              {hasStale ? 'LOCKFILE MISMATCH' : 'IN SYNC'}
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+              Stale Records
+              <InfoButton
+                content={
+                  <>
+                    <strong>Stale Records</strong>
+
+                    Memories whose associated dependency lockfile has changed since the fix was verified.
+                    This means the fix may no longer apply to the current codebase.
+                    <br />
+                    <span style={{ color: 'var(--text-muted)', fontSize: '0.75em' }}>
+                      Triggered when <code>package-lock.json</code> or <code>Cargo.lock</code> hash drifts.
+                    </span>
+                  </>
+                }
+              />
+            </span>
+            <span className="badge gray">
+              {hasStale ? 'DRIFT DETECTED' : 'IN SYNC'}
             </span>
           </div>
           <div
             className="stat-value"
-            style={{ color: hasStale ? 'var(--status-warning)' : 'var(--accent-cyan)' }}
+            style={{ color: 'var(--text-primary)' }}
           >
             {stats.staleCount}
           </div>
           <div className="stat-subtext">
-            Dependencies drifted since original fix verification. Re-verification advised.
+            {hasStale ? 'Re-verification advised. Click to review.' : 'All records match current lockfiles.'}
           </div>
         </div>
 
-        {/* 3. Statistical Confidence (Wilson Lower Bound) */}
+        {/* 3. Statistical Confidence */}
         <div className="stat-hero-card emerald">
           <div className="stat-label">
-            <span>Confidence (Wilson Lower Bound)</span>
-            <span className="badge emerald">95% STATISTICAL CI</span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+              Fix Confidence
+              <InfoButton
+                content={
+                  <>
+                    <strong>Wilson Score Lower Bound (95% CI)</strong>
+
+                    A conservative statistical confidence score for the fix-success rate.
+                    Unlike a raw success rate, the Wilson lower bound avoids over-optimistic estimates
+                    when the sample size is small.
+                    <br />
+                    <span style={{ color: 'var(--text-muted)', fontSize: '0.75em' }}>
+                      E.g., 3 successes / 3 attempts = 100% raw rate, but Wilson CI &asymp; 43% at 95%.
+                    </span>
+                  </>
+                }
+              />
+            </span>
+            <span className="badge emerald">95% CI</span>
           </div>
           <div className="stat-value" style={{ color: 'var(--status-success)' }}>
             {(stats.successRate * 100).toFixed(1)}%
           </div>
           <div className="stat-subtext">
-            Conservative lower bound preventing over-optimistic fix recommendations.
+            Conservative lower bound — prevents over-confident fix recommendations.
           </div>
         </div>
       </div>
 
-      {/* Secondary Standard Telemetry Cards */}
+      {/* ── Secondary Telemetry Cards ── */}
       <div className="stat-grid">
         <div
           className="stat-card"
@@ -161,195 +267,213 @@ export function OverviewScreen({ stats, isLoading, onNavigate }: Props): ReactNo
           onKeyDown={(e) => e.key === 'Enter' && onNavigate('records')}
         >
           <div className="stat-label">
-            <span>Total Memories</span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+              Total Records
+              <InfoButton
+                content={
+                  <>
+                    <strong>Total Memory Records</strong>
+
+                    All indexed error-fix pairs stored by this agent. Each record links an error fingerprint
+                    to a validated fix and is scoped to a repository.
+                  </>
+                }
+              />
+            </span>
             <span className="badge gray">Catalog</span>
           </div>
           <div className="stat-value">{stats.totalRecords}</div>
-          <div className="stat-subtext">Indexed error-fix records across repository scope</div>
+          <div className="stat-subtext">Total indexed error-fix pairs</div>
         </div>
 
         <div className="stat-card">
           <div className="stat-label">
-            <span>Verified Fixes</span>
-            <span className="badge violet">Confirmed</span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+              Verified Fixes
+              <InfoButton
+                content={
+                  <>
+                    <strong>Verified Fixes</strong>
+
+                    Records that have been explicitly confirmed — either via dry-run sandbox execution
+                    or operator approval. Verified fixes carry higher retrieval weight.
+                  </>
+                }
+              />
+            </span>
+            <span className="badge gray">Confirmed</span>
           </div>
-          <div className="stat-value" style={{ color: 'var(--accent-violet)' }}>
+          <div className="stat-value" style={{ color: 'var(--text-primary)' }}>
             {stats.verifiedCount}
           </div>
-          <div className="stat-subtext">Dry-run sandboxed or explicit operator authorized</div>
+          <div className="stat-subtext">Sandbox-verified or operator-approved</div>
         </div>
 
         <div className="stat-card">
           <div className="stat-label">
-            <span>Unique Fingerprints</span>
-            <span className="badge blue">SHA-256</span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+              Unique Fingerprints
+              <InfoButton
+                content={
+                  <>
+                    <strong>Unique Error Fingerprints</strong>
+
+                    Deduplicated SHA-256 hashes of normalized error payloads. Two errors with
+                    different line numbers but the same root cause produce the same fingerprint,
+                    preventing duplicate records.
+                  </>
+                }
+              />
+            </span>
+            <span className="badge gray">SHA-256</span>
           </div>
-          <div className="stat-value" style={{ color: 'var(--accent-blue)' }}>
-            {stats.exactFingerprints}
-          </div>
-          <div className="stat-subtext">Normalized deterministic syntax digest keys</div>
+          <div className="stat-value">{stats.exactFingerprints}</div>
+          <div className="stat-subtext">Deduplicated by normalized error hash</div>
         </div>
       </div>
 
-      {/* Visual Age Distribution Histogram */}
+      {/* ── Memory Age Distribution ── */}
       <div className="panel">
         <div className="panel-header">
-          <div>
-            <h2 className="panel-title">Memory Age Distribution & Temporal Decay</h2>
-          </div>
-          <span className="badge cyan">Decay Factor: 0.8x / Tier</span>
+          <h2 className="panel-title" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+            Memory Age Distribution
+            <InfoButton
+              size="md"
+              content={
+                <>
+                  <strong>Age-Based Retrieval Weighting</strong>
+
+                  Older, unverified records receive a decay penalty during retrieval scoring.
+                  Fresh records are trusted more because the environment is less likely to have changed.
+                  <br />
+                  <span style={{ color: 'var(--text-muted)', fontSize: '0.75em' }}>
+                    Weight tiers: &lt;1h = 1.0&times;, &lt;24h = 0.95&times;, &lt;7d = 0.85&times;, 7d+ = 0.70&times;
+                  </span>
+                </>
+              }
+            />
+          </h2>
+          <span className="badge gray" style={{ fontSize: '0.72rem' }}>Decay: 0.8&times; / Tier</span>
         </div>
-        <p style={{ color: 'var(--text-secondary)', fontSize: '0.84rem', marginBottom: '1.25rem' }}>
-          Record age governs provenance weighting during retrieval ranking. Older unverified records incur decay penalties.
-        </p>
 
         <div className="age-dist-grid">
           {[
             {
-              label: '< 1 Hour (Fresh)',
+              label: '< 1 Hour',
+              sub: 'Fresh',
               count: stats.ageDistribution.under1h,
               color: 'var(--status-success)',
-              decay: '1.0x (Zero Decay)',
+              decay: '1.0×',
             },
             {
-              label: '< 24 Hours (Active)',
+              label: '< 24 Hours',
+              sub: 'Recent',
               count: stats.ageDistribution.under24h,
-              color: 'var(--accent-cyan)',
-              decay: '0.95x Weight',
+              color: 'var(--text-secondary)',
+              decay: '0.95×',
             },
             {
-              label: '< 7 Days (Established)',
+              label: '< 7 Days',
+              sub: 'Established',
               count: stats.ageDistribution.under7d,
-              color: 'var(--accent-violet)',
-              decay: '0.85x Weight',
+              color: 'var(--text-muted)',
+              decay: '0.85×',
             },
             {
-              label: '> 7 Days (Aging/Archived)',
+              label: '7+ Days',
+              sub: 'Aging',
               count: stats.ageDistribution.over7d,
-              color: 'var(--status-warning)',
-              decay: '0.70x (Re-verify)',
+              color: 'var(--border-strong)',
+              decay: '0.70×',
             },
-          ].map((item, idx) => (
-            <div
-              key={idx}
-              style={{
-                background: 'var(--bg-subtle)',
-                padding: '1.15rem',
-                borderRadius: '6px',
-                border: '1px solid var(--border-subtle)',
-              }}
-            >
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'baseline',
-                  marginBottom: '0.5rem',
-                }}
-              >
-                <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
-                  {item.label}
-                </span>
-                <strong className="mono" style={{ color: 'var(--text-primary)', fontSize: '1.15rem' }}>
+          ].map((item) => (
+            <div key={item.label} className="age-dist-cell">
+              <div className="age-dist-header">
+                <div>
+                  <div className="age-dist-label">{item.label}</div>
+                  <div className="age-dist-sub">{item.sub}</div>
+                </div>
+                <strong className="mono" style={{ color: 'var(--text-primary)', fontSize: '1.1rem' }}>
                   {item.count}
                 </strong>
               </div>
 
-              <div
-                style={{
-                  height: '8px',
-                  background: 'rgba(125, 140, 160, 0.12)',
-                  borderRadius: '4px',
-                  overflow: 'hidden',
-                  marginBottom: '0.45rem',
-                }}
-              >
+              <div className="age-dist-bar-track">
                 <div
+                  className="age-dist-bar-fill"
                   style={{
-                    height: '100%',
-                    width: `${Math.max(4, (item.count / ageMax) * 100)}%`,
+                    width: `${Math.max(3, (item.count / ageMax) * 100)}%`,
                     background: item.color,
-                    borderRadius: '4px',
-                    transition: 'width 0.4s ease',
                   }}
                 />
               </div>
 
-              <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
-                Provenance Weight: <span style={{ color: item.color, fontWeight: 600 }}>{item.decay}</span>
+              <div className="age-dist-weight">
+                Weight <span style={{ color: item.color, fontWeight: 600 }}>{item.decay}</span>
               </div>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Subsystem Telemetry & Conformance Status */}
+      {/* ── Subsystem Status ── */}
       <div className="panel">
         <div className="panel-header">
-          <h2 className="panel-title">Core Subsystem Telemetry & Architecture Invariants</h2>
-          <span className="badge emerald">All Checks Passed</span>
+          <h2 className="panel-title">Subsystem Status</h2>
+          <span className="badge emerald">
+            <IconCheck /> All Checks Passed
+          </span>
         </div>
 
-        <div className="subsystem-grid" style={{ fontSize: '0.84rem' }}>
-          <div
-            style={{
-              padding: '1rem',
-              background: 'var(--bg-subtle)',
-              borderRadius: '6px',
-              border: '1px solid var(--border-subtle)',
-            }}
-          >
-            <div style={{ fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.25rem' }}>
-              Transport & Channel Conformance
-            </div>
-            <div style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>
-              MCP Specification 2026-07-28 via stdio. Bridge operates strictly on loopback.
-            </div>
-            <div style={{ marginTop: '0.65rem', display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
-              <span className="badge cyan">stdio channel</span>
-              <span className="badge emerald">Zero stdout leaks</span>
-            </div>
-          </div>
-
-          <div
-            style={{
-              padding: '1rem',
-              background: 'var(--bg-subtle)',
-              borderRadius: '6px',
-              border: '1px solid var(--border-subtle)',
-            }}
-          >
-            <div style={{ fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.25rem' }}>
-              Storage Engine & Isolation
-            </div>
-            <div style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>
-              Append-only JSONL source of truth + rebuildable SQLite FTS5 index.
-            </div>
-            <div style={{ marginTop: '0.65rem', display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
-              <span className="badge violet">SQLite WAL</span>
-              <span className="badge blue">readOnly handle</span>
-            </div>
-          </div>
-
-          <div
-            style={{
-              padding: '1rem',
-              background: 'var(--bg-subtle)',
-              borderRadius: '6px',
-              border: '1px solid var(--border-subtle)',
-            }}
-          >
-            <div style={{ fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.25rem' }}>
-              Security & Defense Perimeter
-            </div>
-            <div style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>
-              Deterministic regex + Shannon entropy secret redaction with dry-run gating.
-            </div>
-            <div style={{ marginTop: '0.65rem', display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
-              <span className="badge emerald">Redaction active</span>
-              <span className="badge rose">Quarantine active</span>
-            </div>
-          </div>
+        <div className="subsystem-rows">
+          <SubsystemRow
+            title="Transport & Channel"
+            description="MCP Specification 2026-07-28 via stdio. Bridge operates strictly on loopback (127.0.0.1)."
+            tags={[
+              { label: 'stdio', variant: 'gray' },
+              { label: 'Zero stdout leaks', variant: 'emerald' },
+            ]}
+            info={
+              <>
+                <strong>Transport Conformance</strong>
+                The server communicates via the MCP stdio transport — no network socket is exposed.
+                All dashboard traffic passes through the local bridge (port 4321).
+              </>
+            }
+          />
+          <SubsystemRow
+            title="Storage Engine"
+            description="Append-only JSONL source of truth with a rebuildable SQLite FTS5 full-text search index."
+            tags={[
+              { label: 'SQLite WAL', variant: 'gray' },
+              { label: 'Read-only handle', variant: 'gray' },
+            ]}
+            info={
+              <>
+                <strong>Append-Only JSONL + SQLite</strong>
+                Every record is written to a JSONL file first (the canonical source of truth), then indexed into
+                SQLite for fast full-text search. The SQLite index can be rebuilt from the JSONL at any time
+                without data loss.
+              </>
+            }
+          />
+          <SubsystemRow
+            title="Security & Redaction"
+            description="Regex + Shannon entropy scanning redacts secrets before storage. Quarantine gate blocks injected memories."
+            tags={[
+              { label: 'Redaction active', variant: 'emerald' },
+              { label: 'Quarantine active', variant: 'rose' },
+            ]}
+            info={
+              <>
+                <strong>Defense Layers</strong>
+                <strong>1. Regex redaction</strong>Strips API keys, tokens, and passwords before storage. <br />
+                <strong>2. Entropy scan</strong>High-entropy strings (e.g., base64 secrets) are flagged. <br />
+                <strong>3. Quarantine gate</strong>Memories with prompt-injection patterns are isolated and
+                excluded from retrieval until reviewed. <br />
+              </>
+            }
+          />
         </div>
       </div>
     </div>
