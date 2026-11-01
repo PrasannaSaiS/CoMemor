@@ -1,48 +1,11 @@
-import { useState, type ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import type { MemoryStats } from '../types.js';
+import { InfoButton } from './shared/InfoTooltip.js';
 
 interface Props {
   stats: MemoryStats | null;
   isLoading?: boolean;
   onNavigate: (screen: string) => void;
-}
-
-/* ── Info tooltip/popover component ─────────────────────────────── */
-interface InfoButtonProps {
-  content: ReactNode;
-  size?: 'sm' | 'md';
-}
-
-function InfoButton({ content, size = 'sm' }: InfoButtonProps): ReactNode {
-  const [open, setOpen] = useState(false);
-
-  return (
-    <span
-      style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', verticalAlign: 'middle' }}
-      onMouseEnter={() => setOpen(true)}
-      onMouseLeave={() => setOpen(false)}
-    >
-      <button
-        type="button"
-        className="info-btn"
-        aria-label="More information"
-        onClick={(e) => { e.stopPropagation(); setOpen((v) => !v); }}
-        style={{ width: size === 'md' ? 18 : 15, height: size === 'md' ? 18 : 15 }}
-      >
-        <svg viewBox="0 0 16 16" fill="none" width="100%" height="100%" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
-          <circle cx="8" cy="8" r="6.5" />
-          <line x1="8" y1="7" x2="8" y2="11.5" />
-          <circle cx="8" cy="4.5" r="0.5" fill="currentColor" stroke="none" />
-        </svg>
-      </button>
-
-      {open && (
-        <span className="info-popover" role="tooltip">
-          {content}
-        </span>
-      )}
-    </span>
-  );
 }
 
 
@@ -190,7 +153,7 @@ export function OverviewScreen({ stats, isLoading, onNavigate }: Props): ReactNo
                 content={
                   <>
                     <strong>Quarantine Flags</strong>
-                    <br />
+
                     Count of memories isolated due to suspected prompt-injection or adversarial content.
                     A non-zero value requires immediate review in the <em>Security Audit</em> tab.
                     <br />
@@ -235,7 +198,7 @@ export function OverviewScreen({ stats, isLoading, onNavigate }: Props): ReactNo
                 content={
                   <>
                     <strong>Stale Records</strong>
-                    <br />
+
                     Memories whose associated dependency lockfile has changed since the fix was verified.
                     This means the fix may no longer apply to the current codebase.
                     <br />
@@ -270,7 +233,7 @@ export function OverviewScreen({ stats, isLoading, onNavigate }: Props): ReactNo
                 content={
                   <>
                     <strong>Wilson Score Lower Bound (95% CI)</strong>
-                    <br />
+
                     A conservative statistical confidence score for the fix-success rate.
                     Unlike a raw success rate, the Wilson lower bound avoids over-optimistic estimates
                     when the sample size is small.
@@ -310,7 +273,7 @@ export function OverviewScreen({ stats, isLoading, onNavigate }: Props): ReactNo
                 content={
                   <>
                     <strong>Total Memory Records</strong>
-                    <br />
+
                     All indexed error-fix pairs stored by this agent. Each record links an error fingerprint
                     to a validated fix and is scoped to a repository.
                   </>
@@ -331,7 +294,7 @@ export function OverviewScreen({ stats, isLoading, onNavigate }: Props): ReactNo
                 content={
                   <>
                     <strong>Verified Fixes</strong>
-                    <br />
+
                     Records that have been explicitly confirmed — either via dry-run sandbox execution
                     or operator approval. Verified fixes carry higher retrieval weight.
                   </>
@@ -354,7 +317,7 @@ export function OverviewScreen({ stats, isLoading, onNavigate }: Props): ReactNo
                 content={
                   <>
                     <strong>Unique Error Fingerprints</strong>
-                    <br />
+
                     Deduplicated SHA-256 hashes of normalized error payloads. Two errors with
                     different line numbers but the same root cause produce the same fingerprint,
                     preventing duplicate records.
@@ -379,7 +342,7 @@ export function OverviewScreen({ stats, isLoading, onNavigate }: Props): ReactNo
               content={
                 <>
                   <strong>Age-Based Retrieval Weighting</strong>
-                  <br />
+
                   Older, unverified records receive a decay penalty during retrieval scoring.
                   Fresh records are trusted more because the environment is less likely to have changed.
                   <br />
@@ -473,7 +436,6 @@ export function OverviewScreen({ stats, isLoading, onNavigate }: Props): ReactNo
             info={
               <>
                 <strong>Transport Conformance</strong>
-                <br />
                 The server communicates via the MCP stdio transport — no network socket is exposed.
                 All dashboard traffic passes through the local bridge (port 4321).
               </>
@@ -489,7 +451,6 @@ export function OverviewScreen({ stats, isLoading, onNavigate }: Props): ReactNo
             info={
               <>
                 <strong>Append-Only JSONL + SQLite</strong>
-                <br />
                 Every record is written to a JSONL file first (the canonical source of truth), then indexed into
                 SQLite for fast full-text search. The SQLite index can be rebuilt from the JSONL at any time
                 without data loss.
@@ -506,13 +467,10 @@ export function OverviewScreen({ stats, isLoading, onNavigate }: Props): ReactNo
             info={
               <>
                 <strong>Defense Layers</strong>
-                <br />
-                1. <strong>Regex redaction</strong> — strips API keys, tokens, and passwords before storage.
-                <br />
-                2. <strong>Entropy scan</strong> — high-entropy strings (e.g., base64 secrets) are flagged.
-                <br />
-                3. <strong>Quarantine gate</strong> — memories with prompt-injection patterns are isolated and
-                excluded from retrieval until reviewed.
+                <strong>1. Regex redaction</strong>Strips API keys, tokens, and passwords before storage. <br />
+                <strong>2. Entropy scan</strong>High-entropy strings (e.g., base64 secrets) are flagged. <br />
+                <strong>3. Quarantine gate</strong>Memories with prompt-injection patterns are isolated and
+                excluded from retrieval until reviewed. <br />
               </>
             }
           />
