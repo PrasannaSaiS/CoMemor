@@ -9,6 +9,12 @@
 
 ---
 
+<figure align="center">
+  <img width="1821" alt="CoMemor Dashboard" src="https://github.com/user-attachments/assets/5b9799f5-5c07-48c1-91b3-3a08ae65312f" />
+  <figcaption><b>Figure 1:</b> CoMemor Dashboard Demo</figcaption>
+</figure>
+
+
 ## What it does
 
 CoMemor is an **MCP (Model Context Protocol) server** that gives your AI agent a persistent, secure memory scoped to your project repository. When your agent hits an error, it records the command, exit code, and the fix that resolved it. Next time a similar error appears — even phrased differently — CoMemor surfaces the stored fix automatically.
