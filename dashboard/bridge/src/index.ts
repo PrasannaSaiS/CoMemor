@@ -22,10 +22,21 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Workspace root discovery: look for .agent-memory directory
-function findMemoryDir(): string {
-  if (process.env.AGENT_MEMORY_DIR && fs.existsSync(process.env.AGENT_MEMORY_DIR)) {
-    return process.env.AGENT_MEMORY_DIR;
+export function findMemoryDir(explicitDir?: string): string {
+  if (explicitDir && fs.existsSync(explicitDir)) {
+    return path.resolve(explicitDir);
   }
+  if (process.env.AGENT_MEMORY_DIR && fs.existsSync(process.env.AGENT_MEMORY_DIR)) {
+    return path.resolve(process.env.AGENT_MEMORY_DIR);
+  }
+
+  // CLI argument check: --dir <path>
+  const dirArgIdx = process.argv.indexOf('--dir');
+  if (dirArgIdx !== -1 && process.argv[dirArgIdx + 1]) {
+    const candidate = path.resolve(process.argv[dirArgIdx + 1]!);
+    if (fs.existsSync(candidate)) return candidate;
+  }
+
   let current = process.cwd();
   for (let i = 0; i < 5; i++) {
     const candidate = path.join(current, '.agent-memory');
@@ -37,18 +48,39 @@ function findMemoryDir(): string {
   // Default to current directory's .agent-memory
   const defaultDir = path.join(process.cwd(), '.agent-memory');
   if (!fs.existsSync(defaultDir)) {
-    fs.mkdirSync(defaultDir, { recursive: true });
+    try {
+      fs.mkdirSync(defaultDir, { recursive: true });
+    } catch {
+      // Ignore if read-only filesystem
+    }
   }
   return defaultDir;
 }
 
-const memoryDir = findMemoryDir();
-const logFilePath = path.join(memoryDir, 'logs.jsonl');
+function findFrontendDist(): string | null {
+  const candidates = [
+    // Running from source: dashboard/bridge/src or dashboard/bridge/dist -> ../../frontend/dist
+    path.resolve(__dirname, '../../frontend/dist'),
+    // Running from npm package bundle: dashboard/bridge/dist -> ../frontend/dist
+    path.resolve(__dirname, '../frontend/dist'),
+    // Running from package root
+    path.resolve(__dirname, '../../../frontend/dist'),
+  ];
+  for (const candidate of candidates) {
+    if (fs.existsSync(candidate) && fs.existsSync(path.join(candidate, 'index.html'))) {
+      return candidate;
+    }
+  }
+  return null;
+}
 
-const storage = new BridgeStorage(memoryDir);
-const tailer = new LogTailer(logFilePath);
+export function buildServer(customMemoryDir?: string) {
+  const memoryDir = findMemoryDir(customMemoryDir);
+  const logFilePath = path.join(memoryDir, 'logs.jsonl');
 
-export function buildServer() {
+  const storage = new BridgeStorage(memoryDir);
+  const tailer = new LogTailer(logFilePath);
+
   const fastify = Fastify({
     logger: false, // Don't clutter console output
   });
@@ -64,11 +96,20 @@ export function buildServer() {
   });
 
   // Serve static frontend assets if built
-  const frontendDist = path.resolve(__dirname, '../../frontend/dist');
-  if (fs.existsSync(frontendDist)) {
+  const frontendDist = findFrontendDist();
+  if (frontendDist) {
     fastify.register(fastifyStatic, {
       root: frontendDist,
       prefix: '/',
+      wildcard: false,
+    });
+
+    // SPA fallback: Return index.html on direct sub-routes (e.g. /overview, /records)
+    fastify.setNotFoundHandler((request, reply) => {
+      if (request.raw.url && request.raw.url.startsWith('/api')) {
+        return reply.status(404).send({ error: 'Endpoint not found', path: request.raw.url });
+      }
+      return reply.sendFile('index.html');
     });
   }
 
@@ -241,17 +282,27 @@ export function buildServer() {
   });
 
   // 8. Retrieval explainability diagnostic endpoint
+  interface ExplainabilityQuery {
+    id?: string;
+    query?: string;
+  }
+
   fastify.get('/api/explainability', async (request) => {
-    const query = request.query as { id?: string };
-    const records = storage.getRecords({ limit: 10 });
-    const target = query.id
-      ? storage.getRecordById(query.id)
-      : records[0]
-        ? storage.getRecordById(records[0].id)
-        : null;
+    const queryParams = request.query as ExplainabilityQuery;
+    const records = queryParams.query
+      ? storage.getRecords({ query: queryParams.query, limit: 10 })
+      : storage.getRecords({ limit: 10 });
+
+    const target = queryParams.id
+      ? storage.getRecordById(queryParams.id)
+      : queryParams.query && records.length > 0
+        ? storage.getRecordById(records[0]!.id)
+        : records[0]
+          ? storage.getRecordById(records[0].id)
+          : null;
 
     return {
-      query: target?.command ?? 'npm run build',
+      query: queryParams.query ?? target?.command ?? 'npm run build',
       threshold: 0.7,
       candidates: records.slice(0, 5).map((r, idx) => ({
         id: r.id,
@@ -307,7 +358,6 @@ export function buildServer() {
   });
 
   // 10. Benchmark results — served from .agent-memory/benchmark-results.json
-  // Populated by `npm run benchmark:run` (Phase 8 harness). Returns null if not yet run.
   fastify.get('/api/benchmark', async (_request, reply) => {
     const benchPath = path.join(memoryDir, 'benchmark-results.json');
     if (!fs.existsSync(benchPath)) {
@@ -324,7 +374,7 @@ export function buildServer() {
     }
   });
 
-  return { fastify, storage, tailer };
+  return { fastify, storage, tailer, memoryDir };
 }
 
 // Start server when executed directly
@@ -332,12 +382,13 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const port = parseInt(process.env.BRIDGE_PORT || '4321', 10);
   const host = '127.0.0.1'; // HARD CONSTRAINT: 127.0.0.1 only
 
-  const { fastify } = buildServer();
+  const { fastify, memoryDir } = buildServer();
   fastify.listen({ port, host }, (err, address) => {
     if (err) {
       console.error('Failed to start dashboard bridge:', err);
       process.exit(1);
     }
+    console.log(`[Dashboard Bridge] Connected to memory: ${memoryDir}`);
     console.log(`[Dashboard Bridge] Running at ${address} (bound strictly to 127.0.0.1)`);
   });
 }
