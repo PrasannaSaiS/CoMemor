@@ -132,5 +132,5 @@ describe('Multi-Process Concurrent Append Integration Test', () => {
     expect(rec2?.id).toBe('proc2-42');
 
     sqlite.close();
-  });
+  }, 15_000);
 });

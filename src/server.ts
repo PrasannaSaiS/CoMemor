@@ -1,7 +1,9 @@
 #!/usr/bin/env node
 /**
- * MCP Server entry point — CoMemor.
- * Targets MCP specification 2026-07-28.
+ * MCP Server entry point - CoMemor.
+ * SDK: @modelcontextprotocol/sdk@1.32.2
+ * Supported MCP specification: SDK 1.x (pre-2026-07-28).
+ * Note: The 2026-07-28 specification requires SDK v2+. Migration tracked separately.
  *
  * CRITICAL INVARIANT: stdout carries JSON-RPC framing only.
  * All application logs go to stderr and .agent-memory/logs.jsonl.
@@ -197,6 +199,7 @@ const service = new MemoryService({
   logger,
 });
 
+// eslint-disable-next-line @typescript-eslint/no-deprecated
 export const server = new Server(
   {
     name: 'CoMemor',

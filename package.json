@@ -1,7 +1,7 @@
 {
   "name": "comemor",
-  "version": "1.0.1",
-  "description": "CoMemor — repository-scoped AI agent memory MCP server. Records errors and fixes, redacts secrets, and surfaces relevant context to your AI coding tools. Targets MCP specification 2026-07-28.",
+  "version": "1.0.5",
+  "description": "CoMemor — repository-scoped AI agent memory MCP server. Records errors and fixes, redacts secrets, and surfaces relevant context to your AI coding tools.",
   "keywords": [
     "mcp",
     "model-context-protocol",
@@ -11,7 +11,13 @@
     "cursor",
     "claude",
     "error-fix",
-    "agentic-development"
+    "agentic-development",
+    "ai-security",
+    "ai-governance",
+    "repository-memory",
+    "privacy-preserving",
+    "mcp-server",
+    "agent-memory"
   ],
   "homepage": "https://github.com/PrasannaSaiS/CoMemor#readme",
   "bugs": {
@@ -21,7 +27,7 @@
     "type": "git",
     "url": "git+https://github.com/PrasannaSaiS/CoMemor.git"
   },
-  "license": "MIT",
+  "license": "CC-BY-NC-4.0",
   "author": "Prasanna Sai",
   "type": "module",
   "main": "dist/server.js",
@@ -67,14 +73,16 @@
     "build:all": "npm run build && npm run build:dashboard:bridge && npm run build:dashboard:frontend"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "1.17.0",
+    "@modelcontextprotocol/sdk": "1.32.2",
     "pino": "9.7.0",
+    "proper-lockfile": "4.1.2",
     "uuid": "11.1.1",
-    "zod": "3.25.67"
+    "zod": "4.6.7"
   },
   "devDependencies": {
     "@modelcontextprotocol/inspector": "0.14.1",
     "@types/node": "22.15.21",
+    "@types/proper-lockfile": "4.1.4",
     "@types/uuid": "10.0.0",
     "@typescript-eslint/eslint-plugin": "8.35.0",
     "@typescript-eslint/parser": "8.35.0",

@@ -1,12 +1,14 @@
 /**
  * JSON Schema definitions for CoMemor tools.
  * Conforms to JSON Schema Draft-07 / MCP specification.
+ *
+ * String length limits mirror src/schemas/validation.ts constants.
  */
 
 export interface ToolInputSchema {
   [x: string]: unknown;
   type: 'object';
-  properties?: Record<string, unknown>;
+  properties?: Record<string, object>;
   required?: string[];
   additionalProperties?: boolean;
 }
@@ -17,6 +19,7 @@ export const RECORD_FAILURE_SCHEMA: ToolInputSchema = {
     command: {
       type: 'string',
       description: 'The exact failing command executed (e.g. "npm test", "cargo test").',
+      maxLength: 1024,
     },
     exitCode: {
       type: 'integer',
@@ -25,15 +28,18 @@ export const RECORD_FAILURE_SCHEMA: ToolInputSchema = {
     output: {
       type: 'string',
       description: 'The raw error trace, stderr, or build output.',
+      maxLength: 128000,
     },
     fixCommands: {
       type: 'array',
-      items: { type: 'string' },
+      items: { type: 'string', maxLength: 1024 },
       description: 'List of allowlisted remediation commands that resolved or resolve the issue.',
+      maxItems: 20,
     },
     explanation: {
       type: 'string',
       description: 'Human-readable explanation of why the failure occurred and why the fix works.',
+      maxLength: 32000,
     },
     risk: {
       type: 'string',
@@ -43,12 +49,14 @@ export const RECORD_FAILURE_SCHEMA: ToolInputSchema = {
     },
     tags: {
       type: 'array',
-      items: { type: 'string' },
+      items: { type: 'string', maxLength: 128 },
       description: 'Categorization tags (e.g. ["typescript", "vitest", "deps"]).',
+      maxItems: 50,
     },
     supersedesId: {
       type: 'string',
       description: 'Optional ID of an older record superseded by this new fix.',
+      maxLength: 128,
     },
   },
   required: ['command', 'exitCode', 'output', 'fixCommands', 'explanation'],
@@ -61,10 +69,12 @@ export const FIND_FIX_SCHEMA: ToolInputSchema = {
     command: {
       type: 'string',
       description: 'The failing command to find past remediation for.',
+      maxLength: 1024,
     },
     output: {
       type: 'string',
       description: 'The error trace or failing output to match against historical memories.',
+      maxLength: 128000,
     },
     threshold: {
       type: 'number',

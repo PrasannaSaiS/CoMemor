@@ -7,9 +7,9 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { spawn } from 'node:child_process';
 import { v4 as uuidv4 } from 'uuid';
 import { redactSensitiveData } from '../core/redact.js';
+import { appendLockedJsonlSync } from '../storage/jsonl.js';
 import type { Risk, VerifyFixOutput } from '../types.js';
 
 export const ALLOWED_BINARIES = new Set([
@@ -125,11 +125,50 @@ export class CommandPolicyEngine {
       };
     }
 
-    // 4. Path containment checks on all arguments
+    // 4. Reject inline code execution flags (-c, -e, --eval)
+    if (['python', 'python3', 'python2'].includes(binary)) {
+      if (args.some((arg) => arg === '-c' || arg.startsWith('-c='))) {
+        return {
+          allowed: false,
+          reason: `Inline code execution flag (-c) is prohibited for ${binary}`,
+          risk: 'high',
+        };
+      }
+    }
+    if (['node', 'bun', 'bunx'].includes(binary)) {
+      if (
+        args.some(
+          (arg) =>
+            arg === '-e' || arg === '--eval' || arg.startsWith('-e=') || arg.startsWith('--eval='),
+        )
+      ) {
+        return {
+          allowed: false,
+          reason: `Inline code evaluation flag (-e/--eval) is prohibited for ${binary}`,
+          risk: 'high',
+        };
+      }
+    }
+
+    // 5. Reject unvetted remote downloads and URLs
+    for (const arg of args) {
+      if (
+        /^(?:https?|ftp|git|ssh):\/\//i.test(arg) ||
+        arg.includes('://') ||
+        /\b(?:https?|ftp):\/\//i.test(arg)
+      ) {
+        return {
+          allowed: false,
+          reason: `Unvetted remote downloads and URLs are not permitted in fix commands: '${arg}'`,
+          risk: 'high',
+        };
+      }
+    }
+
+    // 6. Path containment checks on all arguments
     for (const arg of args) {
       const candidates = arg.includes('=') ? [arg.slice(arg.indexOf('=') + 1)] : [arg];
       for (const cand of candidates) {
-        if (cand.startsWith('http://') || cand.startsWith('https://')) continue;
         if (cand.startsWith('-') && !cand.includes('/') && !cand.includes('\\')) continue;
 
         const isPathLike =
@@ -153,7 +192,7 @@ export class CommandPolicyEngine {
       }
     }
 
-    // 5. Determine risk level
+    // 7. Determine risk level
     let risk: Risk = 'low';
     if (binary === 'cargo' && args.includes('build')) risk = 'medium';
     if (binary === 'npm' && (args.includes('install') || args.includes('i'))) risk = 'medium';
@@ -217,6 +256,7 @@ export class CommandPolicyEngine {
 
   /**
    * Queues an approval request in .agent-memory/approvals-pending.jsonl.
+   * Redacts sensitive data before writing.
    */
   queueApproval(commandString: string, risk: Risk, recordId?: string): string {
     const pendingPath = path.join(this.memoryDir, 'approvals-pending.jsonl');
@@ -229,172 +269,67 @@ export class CommandPolicyEngine {
     const entry = {
       approvalId,
       createdAt: new Date().toISOString(),
-      requestedCommand: commandString,
+      requestedCommand: redactSensitiveData(commandString),
       recordId: recordId ?? null,
       risk,
       reason: 'Requires human operator approval before live execution',
       status: 'pending',
     };
 
-    fs.appendFileSync(pendingPath, JSON.stringify(entry) + '\n', 'utf8');
+    appendLockedJsonlSync(pendingPath, entry);
     return approvalId;
   }
 
   /**
-   * Executes a command within sandboxed constraints:
-   * - No shell string execution (`shell: false`)
-   * - Sanitized environment (credentials removed)
-   * - Strict timeout (default 30s)
-   * - Output buffer cap (64KB)
-   * - Secret redaction on outputs
-   */
-  async executeSandboxed(
-    parsed: ParsedCommand,
-    timeoutMs = 30000,
-    maxOutputBytes = 65536,
-  ): Promise<{ exitCode: number; stdout: string; stderr: string; executionTimeMs: number }> {
-    const start = performance.now();
-
-    // Sanitize environment variables
-    const safeEnv: Record<string, string> = {};
-    for (const [key, value] of Object.entries(process.env)) {
-      if (!value) continue;
-      // Scrub potential secrets from inherited environment
-      if (
-        /TOKEN|KEY|SECRET|PASSWORD|AUTH|CREDENTIAL/i.test(key) &&
-        !key.startsWith('npm_config_')
-      ) {
-        continue;
-      }
-      safeEnv[key] = value;
-    }
-
-    return new Promise((resolve) => {
-      let stdoutBuffer = '';
-      let stderrBuffer = '';
-      let completed = false;
-
-      // On Windows, node npm/npx/yarn/pnpm commands need shell: true or the .cmd extension
-      let cmdBinary = parsed.binary;
-      let cmdShell = false;
-      if (process.platform === 'win32' && ['npm', 'npx', 'yarn', 'pnpm'].includes(parsed.binary)) {
-        cmdBinary = `${parsed.binary}.cmd`;
-      }
-
-      const child = spawn(cmdBinary, parsed.args, {
-        cwd: this.workspaceRoot,
-        env: safeEnv,
-        shell: cmdShell,
-        windowsHide: true,
-      });
-
-      const timer = setTimeout(() => {
-        if (!completed) {
-          completed = true;
-          child.kill('SIGTERM');
-          setTimeout(() => child.kill('SIGKILL'), 1000);
-          resolve({
-            exitCode: -1,
-            stdout: redactSensitiveData(stdoutBuffer),
-            stderr: redactSensitiveData(
-              `${stderrBuffer}\n[EXECUTION TIMEOUT after ${String(timeoutMs)}ms]`,
-            ),
-            executionTimeMs: Math.round(performance.now() - start),
-          });
-        }
-      }, timeoutMs);
-
-      child.stdout.on('data', (chunk: Buffer) => {
-        if (stdoutBuffer.length < maxOutputBytes) {
-          stdoutBuffer += chunk.toString('utf8');
-          if (stdoutBuffer.length >= maxOutputBytes) {
-            stdoutBuffer += '\n[OUTPUT TRUNCATED: Exceeded 64KB cap]';
-          }
-        }
-      });
-
-      child.stderr.on('data', (chunk: Buffer) => {
-        if (stderrBuffer.length < maxOutputBytes) {
-          stderrBuffer += chunk.toString('utf8');
-          if (stderrBuffer.length >= maxOutputBytes) {
-            stderrBuffer += '\n[OUTPUT TRUNCATED: Exceeded 64KB cap]';
-          }
-        }
-      });
-
-      child.on('error', (err) => {
-        if (!completed) {
-          completed = true;
-          clearTimeout(timer);
-          resolve({
-            exitCode: -1,
-            stdout: redactSensitiveData(stdoutBuffer),
-            stderr: redactSensitiveData(`${stderrBuffer}\n${String(err)}`),
-            executionTimeMs: Math.round(performance.now() - start),
-          });
-        }
-      });
-
-      child.on('close', (code) => {
-        if (!completed) {
-          completed = true;
-          clearTimeout(timer);
-          resolve({
-            exitCode: code ?? 0,
-            stdout: redactSensitiveData(stdoutBuffer),
-            stderr: redactSensitiveData(stderrBuffer),
-            executionTimeMs: Math.round(performance.now() - start),
-          });
-        }
-      });
-    });
-  }
-
-  /**
-   * Evaluates and optionally runs verify_fix.
-   * By default dry-run is required. Live execution requires resolved approval.
+   * Evaluates verify_fix under policy.
+   * Server-side in-process live execution has been completely removed.
+   * verifyFix returns a structured command proposal, policy assessment, and required user-confirmation metadata.
+   * Actual execution remains strictly with the host agent or IDE under its native approval flow.
    */
   async verifyFix(
     commandString: string,
     dryRun = true,
     recordId?: string,
   ): Promise<VerifyFixOutput> {
+    await Promise.resolve();
     const policy = this.validateCommand(commandString);
 
     if (!policy.allowed || !policy.parsed) {
       return {
         status: 'dry_run_denied',
+        proposedCommand: redactSensitiveData(commandString),
+        risk: policy.risk,
         policyReason: policy.reason ?? 'Command violates safety policy',
+        requiresHostConfirmation: true,
+        executedByServer: false,
       };
     }
 
     if (dryRun) {
       return {
         status: 'dry_run_allowed',
+        proposedCommand: redactSensitiveData(commandString),
+        parsed: policy.parsed,
+        risk: policy.risk,
         policyReason: `Command allowed under dry-run policy (Risk: ${policy.risk})`,
+        requiresHostConfirmation: true,
+        executedByServer: false,
       };
     }
 
-    // Live execution requested: strictly verify human approval in approvals-resolved.jsonl
-    const isApproved = this.hasResolvedApproval(commandString);
-    if (!isApproved) {
-      const approvalId = this.queueApproval(commandString, policy.risk, recordId);
-      return {
-        status: 'pending_approval',
-        approvalId,
-        policyReason:
-          'Live execution is not approved. Request has been queued in approvals-pending.jsonl. An operator must resolve it in approvals-resolved.jsonl.',
-      };
-    }
-
-    // Execute sandboxed
-    const result = await this.executeSandboxed(policy.parsed);
+    // Live execution requested: Server-side execution is removed.
+    // Queue approval request in approvals-pending.jsonl for operator audit trail and return pending_approval.
+    const approvalId = this.queueApproval(commandString, policy.risk, recordId);
     return {
-      status: result.exitCode === 0 ? 'passed' : 'failed',
-      exitCode: result.exitCode,
-      stdout: result.stdout,
-      stderr: result.stderr,
-      executionTimeMs: result.executionTimeMs,
+      status: 'pending_approval',
+      approvalId,
+      proposedCommand: redactSensitiveData(commandString),
+      parsed: policy.parsed,
+      risk: policy.risk,
+      policyReason:
+        'Live server-side execution has been removed for security. Proposed command has been logged to approvals-pending.jsonl for operator review. Execute via host agent/IDE approval mechanisms.',
+      requiresHostConfirmation: true,
+      executedByServer: false,
     };
   }
 }
