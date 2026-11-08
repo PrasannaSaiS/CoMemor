@@ -7,6 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.0.5] - 2026-11-08
+
+### Security & Hardening (Phase 1 Audit Implementation)
+- **Dependency Upgrades:**
+  - Upgraded `@modelcontextprotocol/sdk` to pinned `1.32.2` (resolves 8 CVEs/GHSA advisories including ReDoS, memory exhaustion, unbounded batch lengths).
+  - Upgraded `zod` to `4.6.7` (resolves GHSA-mrhx-c7xc-m3w5 constrained collection memory exhaustion).
+  - Added `proper-lockfile@4.1.2` for cross-platform advisory file locking.
+  - Eliminated all production-reachable vulnerabilities (`npm audit --omit=dev` reports 0 vulnerabilities).
+- **XML Sanitization Envelope Hardening (F-17):**
+  - Added `xmlEscape` utility escaping special characters (`<`, `>`, `&`, `"`, `'`) for all untrusted user data interpolated into `<untrusted_historical_memory>` envelopes (`command`, `explanation`, `suggested_commands`).
+  - Added adversarial regression tests for closing tags, nested tags, and Unicode characters.
+- **Approval Gate & Execution Safety (F-09):**
+  - Removed arbitrary server-side command execution from `verify_fix`. Remediation execution is delegated to the host agent's native user-confirmation and execution mechanisms.
+  - `verify_fix` operates in policy-validation mode, queuing approvals in `approvals-pending.jsonl` for operator auditability.
+- **Cross-Process Advisory Locking:**
+  - Hardened `JsonlStorage.append` with `proper-lockfile` cross-process locking and in-process write queue serialization.
+  - Hardened approval queue mutations with cross-process locking.
+- **Git Provenance Collection:**
+  - Added `collectGitProvenance` recording HEAD commit SHA, branch, and dirty working-tree state at record creation time via `child_process.execFile` with fixed arguments (`shell: false`, 3s timeout, 4KB buffer cap).
+  - Degrades gracefully if Git is unavailable or workspace is not a Git repository.
+- **Accurate Pending Approvals Count:**
+  - Replaced hardcoded `0` in `getStats()` with dynamic calculation counting unresolved IDs between `approvals-pending.jsonl` and `approvals-resolved.jsonl`.
+- **Input Length Protections:**
+  - Added strict `max()` constraints to Zod schemas (commands: 1024 chars, output: 128KB, explanation: 32KB, fix commands: max 20, tags: max 50).
+- **Licensing & Specification Alignment:**
+  - Project license updated to source-available `CC-BY-NC-4.0`.
+  - Clarified supported MCP specification baseline as SDK 1.x / `2024-11-05` (SDK v2 / spec 2026-07-28 tracked separately in ADR-007).
+
+---
+
 ## [1.0.0] - 2026-09-20
 
 ### Added

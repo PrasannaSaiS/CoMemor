@@ -53,7 +53,7 @@ describe('Dashboard Process Isolation & Security Invariants', () => {
   afterEach(() => {
     try {
       fs.rmSync(tmpDir, { recursive: true, force: true });
-    } catch { }
+    } catch {}
   });
 
   // ─── 1. Static Audit: Zero Command Execution Invariant ────────────────────

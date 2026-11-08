@@ -4,8 +4,8 @@
 
 [![npm version](https://img.shields.io/npm/v/comemor)](https://www.npmjs.com/package/comemor)
 [![Node ≥22.5](https://img.shields.io/badge/node-%3E%3D22.5-brightgreen)](https://nodejs.org)
-[![MCP 2026-07-28](https://img.shields.io/badge/MCP-2026--07--28-blue)](https://spec.modelcontextprotocol.io)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![MCP 1.x](https://img.shields.io/badge/MCP-1.x-blue)](https://modelcontextprotocol.io)
+[![License: CC BY-NC 4.0](https://img.shields.io/badge/License-CC_BY--NC_4.0-lightgrey.svg)](LICENSE)
 
 ---
 
@@ -333,7 +333,7 @@ src/               MCP server source (TypeScript)
 dashboard/
   bridge/          Read-only Fastify HTTP bridge to .agent-memory data
   frontend/        React + Vite Memory Console (pre-built, ships in package)
-tests/             168 tests — unit, integration, security, e2e
+tests/             197 tests — unit, integration, security, e2e
 docs/              Architecture decisions (ADRs), operations guide, evaluation
 ```
 
@@ -341,4 +341,8 @@ docs/              Architecture decisions (ADRs), operations guide, evaluation
 
 ## License
 
-MIT — see [LICENSE](LICENSE)
+Source-available under **CC-BY-NC-4.0** (Creative Commons Attribution-NonCommercial 4.0 International) — see [LICENSE](LICENSE).
+
+- **Non-Commercial**: Free for personal, academic, and non-commercial development.
+- **Prior Releases**: Releases distributed under MIT prior to this change remain under their original MIT terms.
+- **Commercial Evaluation**: For enterprise pilots or commercial licensing, contact the repository maintainer.

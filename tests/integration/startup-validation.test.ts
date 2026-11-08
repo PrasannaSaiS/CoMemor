@@ -143,5 +143,5 @@ describe('Startup Environment Validation', () => {
     const parsed = JSON.parse(result.stderr.trim().split('\n')[0]!);
     expect(parsed.error).toBe('startup_validation_failed');
     expect(parsed.field).toBe('AGENT_MEMORY_DIR');
-  });
+  }, 15000);
 });

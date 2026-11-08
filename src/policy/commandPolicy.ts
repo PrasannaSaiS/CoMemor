@@ -10,6 +10,7 @@ import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { v4 as uuidv4 } from 'uuid';
 import { redactSensitiveData } from '../core/redact.js';
+import { appendLockedJsonlSync } from '../storage/jsonl.js';
 import type { Risk, VerifyFixOutput } from '../types.js';
 
 export const ALLOWED_BINARIES = new Set([
@@ -236,7 +237,7 @@ export class CommandPolicyEngine {
       status: 'pending',
     };
 
-    fs.appendFileSync(pendingPath, JSON.stringify(entry) + '\n', 'utf8');
+    appendLockedJsonlSync(pendingPath, entry);
     return approvalId;
   }
 

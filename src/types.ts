@@ -54,8 +54,12 @@ export interface Verification {
 /** Authorship / git provenance. */
 export interface Provenance {
   author: string;
-  /** Git commit SHA at time of recording. */
+  /** Git commit SHA at time of recording. Null if git unavailable. */
   commit: string | null;
+  /** Git branch at time of recording. Undefined if git unavailable. */
+  branch?: string | undefined;
+  /** Whether the working tree had uncommitted changes. Undefined if git unavailable. */
+  isDirty?: boolean | undefined;
 }
 
 /** Raised when a stored explanation exhibits injection-indicator patterns. */
