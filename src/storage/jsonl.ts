@@ -116,6 +116,36 @@ export class JsonlStorage {
   }
 
   /**
+   * Synchronously reads all records from the JSONL file.
+   * Useful for synchronous startup reconciliation.
+   */
+  readAllSync(): MemoryRecord[] {
+    if (!fs.existsSync(this.filePath)) {
+      return [];
+    }
+    const content = fs.readFileSync(this.filePath, 'utf8');
+    const lines = content.split('\n').filter((line) => line.trim().length > 0);
+    const records: MemoryRecord[] = [];
+    for (let i = 0; i < lines.length; i++) {
+      try {
+        records.push(JSON.parse(lines[i] ?? '') as MemoryRecord);
+      } catch {
+        process.stderr.write(
+          JSON.stringify({
+            level: 'warn',
+            event: 'jsonl_corrupted_line',
+            file: this.filePath,
+            lineNumber: i + 1,
+            preview: (lines[i] ?? '').slice(0, 80),
+            recovery: 'line skipped; re-run index rebuild from valid lines',
+          }) + '\n',
+        );
+      }
+    }
+    return records;
+  }
+
+  /**
    * Reads all records from the JSONL file.
    * Corrupted lines (invalid JSON) are skipped with a stderr warning.
    * Recovery: re-run the SQLite index rebuild from valid lines only.

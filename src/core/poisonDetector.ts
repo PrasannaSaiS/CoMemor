@@ -1,12 +1,12 @@
 /**
  * Persisted-Retrieval Poisoning Detector - Phase 5.
  *
- * Heuristic-based flagging that detects (but does NOT silently strip) prompt-injection
- * payloads planted inside memory records. Every detection raises a PoisoningFlag;
- * records are quarantined and surfaced via the dashboard Security and Redaction Audit screen.
- *
- * Design invariant: this is a DETECTION layer, not an execution sandbox.
- * See docs/threat-model.md section 5 for an explicit list of what this does NOT defend against.
+ * Hardened for Prompt 2:
+ * - Homoglyph canonicalization runs BEFORE injection-pattern evaluation
+ * - Context-sensitive mixed-script detection: preserves benign multilingual compiler logs
+ * - Differentiates pure non-Latin text (Russian, Greek, CJK, etc.) from intentional homoglyph masquerading
+ * - Heuristic-based flagging that detects (but does NOT silently strip) prompt-injection payloads
+ * - Quarantined records are isolated and surfaced via dashboard for operator review
  */
 
 import type { PoisoningFlag } from '../types.js';
@@ -57,9 +57,11 @@ const NESTED_INJECTION_PATTERNS: RegExp[] = [
 /** Zero-width and invisible Unicode characters used to hide payloads from human reviewers. */
 const ZERO_WIDTH_REGEX = /[\u200B-\u200F\u2028\u2029\u202A-\u202E\u2060-\u2064\uFEFF\u00AD]/;
 
-/** Unicode homoglyph characters visually confusable with ASCII letters. */
-const HOMOGLYPH_REGEX =
-  /[\u0430\u0435\u043E\u0440\u0441\u0443\u0445\u0456\u0458\u04CF\u03BF\u03C1\u03B1\u03B5\u03B9\u03BD\u03C5\u03C7\uFF01-\uFF5E]/;
+/** Confusable Cyrillic and Greek characters commonly mixed into Latin attack words. */
+const HOMOGLYPH_CHARS =
+  '[\u0430\u0435\u043E\u0440\u0441\u0443\u0445\u0456\u0458\u04CF\u03BF\u03C1\u03B1\u03B5\u03B9\u03BD\u03C5\u03C7]';
+/** Fullwidth Latin letters (A-Z, a-z) used to evade standard ASCII pattern matching. */
+const FULLWIDTH_LATIN_REGEX = /[\uFF21-\uFF3A\uFF41-\uFF5A]/;
 
 /** Map of visually confusable Cyrillic and Greek characters to ASCII Latin equivalents. */
 export const HOMOGLYPH_MAP: Record<string, string> = {
@@ -100,6 +102,23 @@ export function canonicalizeHomoglyphs(text: string): string {
     mapped += HOMOGLYPH_MAP[char] ?? char;
   }
   return mapped;
+}
+
+/**
+ * Checks for mixed-script masquerading: tokens that mix Latin characters with
+ * confusable Cyrillic or Greek lookalikes.
+ * Pure non-Latin text (e.g. standard Russian or Greek words) does NOT trigger this.
+ */
+function hasMixedScriptHomoglyph(text: string): boolean {
+  const words = text.split(/\s+/);
+  const latinRegex = /[a-zA-Z]/;
+  const confusableRegex = new RegExp(HOMOGLYPH_CHARS);
+  for (const word of words) {
+    if (latinRegex.test(word) && confusableRegex.test(word)) {
+      return true;
+    }
+  }
+  return false;
 }
 
 const IMPERATIVE_VERBS = [
@@ -150,62 +169,16 @@ export interface PoisoningDetectionResult {
 
 /**
  * Runs the full poisoning detection pipeline against a text string.
- * Returns null flag if no signal is found; a PoisoningFlag otherwise.
- * Design: Flag, do not strip. Records are quarantined by the caller.
+ * Canonicalizes homoglyphs before pattern evaluation to detect obfuscated injections.
+ * Preserves benign multilingual compiler logs.
  */
 export function detectPoisoning(text: string): PoisoningDetectionResult {
-  for (const pattern of IMPERATIVE_INJECTION_PATTERNS) {
-    if (pattern.test(text)) {
-      return {
-        flag: {
-          raisedAt: new Date().toISOString(),
-          reason: `Imperative injection pattern detected: ${pattern.source.slice(0, 80)}`,
-          status: 'reviewed',
-        },
-        detectorId: 'imperative_injection',
-      };
-    }
+  if (!text || text.trim().length === 0) {
+    return { flag: null };
   }
 
-  for (const pattern of SYSTEM_PROMPT_MARKERS) {
-    if (pattern.test(text)) {
-      return {
-        flag: {
-          raisedAt: new Date().toISOString(),
-          reason: `Fake system-prompt marker detected: ${pattern.source.slice(0, 80)}`,
-          status: 'reviewed',
-        },
-        detectorId: 'system_prompt_marker',
-      };
-    }
-  }
-
-  for (const pattern of EXFILTRATION_PATTERNS) {
-    if (pattern.test(text)) {
-      return {
-        flag: {
-          raisedAt: new Date().toISOString(),
-          reason: `Data-exfiltration pattern detected: ${pattern.source.slice(0, 80)}`,
-          status: 'reviewed',
-        },
-        detectorId: 'exfiltration',
-      };
-    }
-  }
-
-  for (const pattern of NESTED_INJECTION_PATTERNS) {
-    if (pattern.test(text)) {
-      return {
-        flag: {
-          raisedAt: new Date().toISOString(),
-          reason: `Nested/encoded injection attempt detected: ${pattern.source.slice(0, 80)}`,
-          status: 'reviewed',
-        },
-        detectorId: 'nested_injection',
-      };
-    }
-  }
-
+  // 1. Structural obfuscation checks (zero-width characters and homoglyph substitution)
+  // These take precedence in attribution when evasive encoding is detected.
   if (ZERO_WIDTH_REGEX.test(text)) {
     return {
       flag: {
@@ -217,7 +190,9 @@ export function detectPoisoning(text: string): PoisoningDetectionResult {
     };
   }
 
-  if (HOMOGLYPH_REGEX.test(text)) {
+  // Context-sensitive Homoglyph detection:
+  // Flags fullwidth Latin ASCII evasion or mixed-script tokens (e.g. Latin letters mixed with Cyrillic lookalikes)
+  if (FULLWIDTH_LATIN_REGEX.test(text) || hasMixedScriptHomoglyph(text)) {
     return {
       flag: {
         raisedAt: new Date().toISOString(),
@@ -228,8 +203,68 @@ export function detectPoisoning(text: string): PoisoningDetectionResult {
     };
   }
 
-  const density = computeImperativeDensity(text);
-  if (text.split(/\s+/).length >= 20 && density > IMPERATIVE_DENSITY_THRESHOLD) {
+  // Canonicalize for pattern scanning (canonicalization runs before injection-pattern evaluation)
+  const canonical = canonicalizeHomoglyphs(text);
+
+  // 2. Direct or Obfuscated Imperative Injections
+  for (const pattern of IMPERATIVE_INJECTION_PATTERNS) {
+    if (pattern.test(text) || pattern.test(canonical)) {
+      return {
+        flag: {
+          raisedAt: new Date().toISOString(),
+          reason: `Imperative injection pattern detected: ${pattern.source.slice(0, 80)}`,
+          status: 'reviewed',
+        },
+        detectorId: 'imperative_injection',
+      };
+    }
+  }
+
+  // 3. Fake system-prompt markers
+  for (const pattern of SYSTEM_PROMPT_MARKERS) {
+    if (pattern.test(text) || pattern.test(canonical)) {
+      return {
+        flag: {
+          raisedAt: new Date().toISOString(),
+          reason: `Fake system-prompt marker detected: ${pattern.source.slice(0, 80)}`,
+          status: 'reviewed',
+        },
+        detectorId: 'system_prompt_marker',
+      };
+    }
+  }
+
+  // 4. Exfiltration signatures
+  for (const pattern of EXFILTRATION_PATTERNS) {
+    if (pattern.test(text) || pattern.test(canonical)) {
+      return {
+        flag: {
+          raisedAt: new Date().toISOString(),
+          reason: `Data-exfiltration pattern detected: ${pattern.source.slice(0, 80)}`,
+          status: 'reviewed',
+        },
+        detectorId: 'exfiltration',
+      };
+    }
+  }
+
+  // 5. Nested or encoded injection
+  for (const pattern of NESTED_INJECTION_PATTERNS) {
+    if (pattern.test(text) || pattern.test(canonical)) {
+      return {
+        flag: {
+          raisedAt: new Date().toISOString(),
+          reason: `Nested/encoded injection attempt detected: ${pattern.source.slice(0, 80)}`,
+          status: 'reviewed',
+        },
+        detectorId: 'nested_injection',
+      };
+    }
+  }
+
+  // 6. Imperative verb density check on canonicalized text
+  const density = computeImperativeDensity(canonical);
+  if (canonical.split(/\s+/).length >= 20 && density > IMPERATIVE_DENSITY_THRESHOLD) {
     return {
       flag: {
         raisedAt: new Date().toISOString(),

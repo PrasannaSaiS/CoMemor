@@ -93,6 +93,71 @@ describe('Adversarial Secret Redaction Test Suite', () => {
       isSecret: false,
       expectedRedacted: false,
     },
+    {
+      category: 'clean_text',
+      name: 'Config setting with TOKEN substring',
+      input: 'export TOKEN_EXPIRY=3600',
+      isSecret: false,
+      expectedRedacted: false,
+    },
+    {
+      category: 'clean_text',
+      name: 'Config setting with PASSWORD substring',
+      input: 'PASSWORD_MIN_LENGTH=8',
+      isSecret: false,
+      expectedRedacted: false,
+    },
+    {
+      category: 'clean_text',
+      name: 'Config setting with SECRET substring',
+      input: 'SECRET_FILE="/etc/app/config.json"',
+      isSecret: false,
+      expectedRedacted: false,
+    },
+
+    // 4. Extended Provider and Protocol Secret Patterns
+    {
+      category: 'extended_provider',
+      name: 'Bearer authorization header',
+      input: 'Authorization: Bearer my-custom-secret-token-12345',
+      isSecret: true,
+      expectedRedacted: true,
+    },
+    {
+      category: 'extended_provider',
+      name: 'Environment variable DB_PASSWORD',
+      input: 'export DB_PASSWORD="superPass123"',
+      isSecret: true,
+      expectedRedacted: true,
+    },
+    {
+      category: 'extended_provider',
+      name: 'Short API_KEY assignment',
+      input: 'API_KEY=shortSecretKey',
+      isSecret: true,
+      expectedRedacted: true,
+    },
+    {
+      category: 'extended_provider',
+      name: 'Slack Bot token',
+      input: 'Connected with bot token xoxb-1234567890-abcdefghij',
+      isSecret: true,
+      expectedRedacted: true,
+    },
+    {
+      category: 'extended_provider',
+      name: 'HuggingFace User Access Token',
+      input: 'HUGGINGFACE_TOKEN=hf_abcdefghijklmnopqrstuvwxyz012345678',
+      isSecret: true,
+      expectedRedacted: true,
+    },
+    {
+      category: 'extended_provider',
+      name: 'Google Cloud / Maps API Key',
+      input: 'key: AIzaSyA1B2C3D4E5F6G7H8I9J0K1L2M3N4O5P6Q',
+      isSecret: true,
+      expectedRedacted: true,
+    },
 
     // 4. Adversarial: Interleaved whitespace
     {

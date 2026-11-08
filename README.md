@@ -248,7 +248,7 @@ Save the above rules/instructions in 'AGENTS.md' in project root directory or ot
 |------|-------------|
 | `find_fix` | Before retrying any error — searches for a matching stored fix |
 | `record_failure` | After a fix is confirmed working — persists the record |
-| `verify_fix` | Dry-run a stored fix before executing; requires human approval to actually run |
+| `verify_fix` | Evaluates a proposed fix under policy and returns a structured proposal; actual execution stays with host IDE |
 | `stats` | View aggregate memory statistics (record count, quarantine status, age) |
 
 ---
@@ -314,10 +314,12 @@ The `records.jsonl` file is safe to commit — all API keys, tokens, and credent
 ## Security
 
 - `stdout` carries **JSON-RPC only** — no debug output ever written there
-- Secrets stripped via regex patterns **and** Shannon entropy analysis (H > 4.5 bits/char)
+- Secrets stripped via regex patterns **and** Shannon entropy analysis across all stored and queried fields
 - All retrieved record content is wrapped in explicit untrusted-data delimiters before return
-- Fix execution requires explicit human approval; `dry_run` is the enforced safe default
+- In-process command execution is disabled by design: `verify_fix` evaluates policy and returns a structured proposal with `requiresHostConfirmation: true` and `executedByServer: false`
 - Quarantined records (detected prompt-injection attempts) are isolated and excluded from retrieval
+- Single source of truth: append-only JSONL with cross-process file locks, and self-healing SQLite FTS5 index projection
+- MCP Protocol baseline pinned to `@modelcontextprotocol/sdk@1.32.2` (MCP 1.x stream)
 
 ---
 

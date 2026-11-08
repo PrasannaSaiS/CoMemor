@@ -205,6 +205,31 @@ export class MemoryService {
       },
       'MemoryService initialized',
     );
+
+    // Reconcile SQLite projection against canonical JSONL on startup
+    this.reconcileOnStartup();
+  }
+
+  /**
+   * Reconciles the secondary SQLite projection with the canonical JSONL log on startup.
+   */
+  reconcileOnStartup(): void {
+    try {
+      const canonicalRecords = this.jsonl.readAllSync();
+      const result = this.sqlite.reconcileWithCanonical(canonicalRecords);
+      if (result.rebuilt) {
+        this.logger.info(
+          { event: 'storage_reconciled', count: result.syncedCount },
+          `Reconciled SQLite projection with ${String(result.syncedCount)} canonical records from JSONL`,
+        );
+      }
+    } catch (err) {
+      this.logger.warn(
+        { event: 'storage_reconciliation_error', error: String(err) },
+        'Startup reconciliation encountered an error; marking index dirty',
+      );
+      this.sqlite.markIndexDirty(true);
+    }
   }
 
   /**
@@ -266,8 +291,12 @@ export class MemoryService {
       'Recording failure',
     );
 
-    // 1. Redact secrets
+    // 1. Redact secrets across all user-supplied fields
+    const redactedCommand = redactSensitiveData(input.command);
     const redactedOutput = redactSensitiveData(input.output);
+    const redactedExplanation = redactSensitiveData(input.explanation);
+    const redactedFixCommands = input.fixCommands.map((cmd) => redactSensitiveData(cmd));
+    const redactedTags = input.tags.map((tag) => redactSensitiveData(tag));
 
     // 2. Normalize
     const normalizedOutput = normalizeOutput(redactedOutput);
@@ -276,7 +305,12 @@ export class MemoryService {
     const fingerprint = generateFingerprint(normalizedOutput);
 
     // 4. Check for prompt poisoning indicators across all untrusted text fields
-    const poisoningFlag = detectPoisoningInRecord([input.explanation, input.output]).flag;
+    const poisoningFlag = detectPoisoningInRecord([
+      redactedExplanation,
+      redactedOutput,
+      redactedCommand,
+      ...redactedFixCommands,
+    ]).flag;
 
     // 5. Collect git provenance (optional — never fails the operation)
     const gitProvenance = await collectGitProvenance(this.workspaceRoot);
@@ -289,15 +323,15 @@ export class MemoryService {
       id,
       createdAt: now,
       repositoryId: this.repositoryId,
-      command: input.command,
+      command: redactedCommand,
       exitCode: input.exitCode,
       rawOutputRedacted: redactedOutput,
       normalizedOutput,
       fingerprint,
       normalizerVersion: CURRENT_NORMALIZER_VERSION,
       fix: {
-        commands: input.fixCommands,
-        explanation: input.explanation,
+        commands: redactedFixCommands,
+        explanation: redactedExplanation,
         risk: input.risk,
       },
       environment: {
@@ -319,15 +353,32 @@ export class MemoryService {
         ...(gitProvenance.isDirty !== null && { isDirty: gitProvenance.isDirty }),
       },
       supersedes: input.supersedesId ?? null,
-      tags: input.tags,
+      tags: redactedTags,
       poisoningFlag,
     };
 
-    // 6. Append to JSONL source of truth (under advisory lock)
+    // 6. Append to JSONL canonical source of truth FIRST (under advisory cross-process lock)
     await this.jsonl.append(record);
 
-    // 7. Update SQLite index
-    this.sqlite.indexRecord(record);
+    // 7. Update secondary SQLite index projection — if it fails, mark dirty and attempt self-healing rebuild
+    try {
+      this.sqlite.indexRecord(record);
+    } catch (sqliteErr) {
+      this.logger.error(
+        { event: 'sqlite_index_error', id, error: String(sqliteErr) },
+        'SQLite index update failed; marking index dirty and attempting self-healing rebuild',
+      );
+      this.sqlite.markIndexDirty(true);
+      try {
+        const canonical = await this.jsonl.readAll();
+        this.sqlite.reconcileWithCanonical(canonical);
+      } catch (rebuildErr) {
+        this.logger.error(
+          { event: 'sqlite_rebuild_error', error: String(rebuildErr) },
+          'Self-healing SQLite rebuild also failed; index remains marked dirty for next startup reconciliation',
+        );
+      }
+    }
 
     const status = poisoningFlag ? 'flagged_quarantined' : 'recorded';
 
@@ -361,12 +412,13 @@ export class MemoryService {
     await Promise.resolve();
     const input = FindFixZodSchema.parse(rawInput);
 
-    this.logger.debug({ event: 'find_fix_start', command: input.command }, 'Finding fix');
-
-    const commandFamily = extractCommandFamily(input.command);
-
-    // 1. Redact query error
+    // 1. Redact query error and command before processing or logging
+    const redactedCommand = redactSensitiveData(input.command);
     const redactedOutput = redactSensitiveData(input.output);
+
+    this.logger.debug({ event: 'find_fix_start', command: redactedCommand }, 'Finding fix');
+
+    const commandFamily = extractCommandFamily(redactedCommand);
 
     // 2. Normalize query error
     const normalizedOutput = normalizeOutput(redactedOutput);
@@ -503,38 +555,26 @@ export class MemoryService {
   async verifyFix(rawInput: VerifyFixInput): Promise<VerifyFixOutput> {
     const input = VerifyFixZodSchema.parse(rawInput);
 
+    // Redact command before evaluation or logging
+    const redactedCommand = redactSensitiveData(input.command);
+
     this.logger.info(
       { event: 'verify_fix_start', recordId: input.recordId, dryRun: input.dryRun },
       'verify_fix called',
     );
 
-    // Always delegate to commandPolicy.verifyFix with dryRun=true
-    // regardless of what the caller requested (live execution removed per audit)
+    // Delegate to commandPolicy.verifyFix with redacted command
     const result = await this.commandPolicy.verifyFix(
-      input.command,
-      true, // Always dry-run — live execution removed
+      redactedCommand,
+      input.dryRun,
       input.recordId,
     );
 
-    // If policy allows, optionally queue an approval request for operator audit trail
-    if (
-      result.status === 'dry_run_allowed' &&
-      input.allowApprovalQueue &&
-      !input.dryRun // caller was requesting live execution — queue for human approval
-    ) {
-      this.commandPolicy.queueApproval(input.command, 'low', input.recordId);
+    if (result.status === 'pending_approval') {
       this.logger.info(
-        { event: 'verify_fix_queued', recordId: input.recordId },
+        { event: 'verify_fix_queued', recordId: input.recordId, approvalId: result.approvalId },
         'Live execution requested — queued approval; use host agent execution mechanisms',
       );
-      return {
-        ...result,
-        status: 'pending_approval' as const,
-        policyReason:
-          'Command is policy-compliant. Live server-side execution has been removed for security. ' +
-          'An approval entry has been queued in approvals-pending.jsonl. ' +
-          'Execute the command via your host agent or terminal after human review.',
-      };
     }
 
     return result;

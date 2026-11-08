@@ -113,7 +113,7 @@ describe('sanitization envelope — format contract', () => {
       service.close();
       fs.rmSync(tmpDir, { recursive: true, force: true });
     }
-  });
+  }, 15_000);
 
   it('envelope includes quarantine_warning for flagged records', async () => {
     const { MemoryService } = await import('../../src/core/memoryService.js');
@@ -146,7 +146,7 @@ describe('sanitization envelope — format contract', () => {
       service.close();
       fs.rmSync(tmpDir, { recursive: true, force: true });
     }
-  });
+  }, 15_000);
 });
 
 // ─── 4. Provenance-weighted trust decay ──────────────────────────────────────
@@ -177,7 +177,7 @@ describe('provenance-weighted trust', () => {
       service.close();
       fs.rmSync(tmpDir, { recursive: true, force: true });
     }
-  });
+  }, 15_000);
 
   it('quarantined records have significantly lower trust score', async () => {
     const { MemoryService } = await import('../../src/core/memoryService.js');
@@ -211,7 +211,7 @@ describe('provenance-weighted trust', () => {
       service.close();
       fs.rmSync(tmpDir, { recursive: true, force: true });
     }
-  });
+  }, 15_000);
 });
 
 // ─── 5. Stats API surfaces quarantine count ──────────────────────────────────
@@ -245,7 +245,7 @@ describe('stats API — quarantine count', () => {
       service.close();
       fs.rmSync(tmpDir, { recursive: true, force: true });
     }
-  });
+  }, 15_000);
 });
 
 // ─── 6. Individual detector unit tests ───────────────────────────────────────

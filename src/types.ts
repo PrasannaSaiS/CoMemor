@@ -178,6 +178,11 @@ export interface VerifyFixOutput {
   stderr?: string;
   executionTimeMs?: number;
   policyReason?: string;
+  proposedCommand?: string;
+  parsed?: { binary: string; args: string[] };
+  risk?: Risk;
+  requiresHostConfirmation?: boolean;
+  executedByServer?: boolean;
 }
 
 /** Input for list_memory_stats tool */

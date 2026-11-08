@@ -47,7 +47,76 @@ export class SqliteIndex {
         id UNINDEXED,
         normalized_output
       );
+
+      CREATE TABLE IF NOT EXISTS index_metadata (
+        key TEXT PRIMARY KEY,
+        value TEXT NOT NULL
+      );
     `);
+  }
+
+  /**
+   * Checks whether the secondary SQLite index has been flagged as dirty.
+   */
+  isIndexDirty(): boolean {
+    try {
+      const row = this.db
+        .prepare("SELECT value FROM index_metadata WHERE key = 'is_dirty'")
+        .get() as { value: string } | undefined;
+      return row?.value === 'true';
+    } catch {
+      return true;
+    }
+  }
+
+  /**
+   * Marks the secondary index dirty or clean in index_metadata.
+   */
+  markIndexDirty(isDirty: boolean): void {
+    try {
+      this.db
+        .prepare(
+          `
+        INSERT INTO index_metadata (key, value) VALUES ('is_dirty', ?)
+        ON CONFLICT(key) DO UPDATE SET value = excluded.value
+      `,
+        )
+        .run(isDirty ? 'true' : 'false');
+    } catch {
+      // In case of database lock or disk failure, log or degrade gracefully
+    }
+  }
+
+  /**
+   * Retrieves the count of records recorded during last reconciliation.
+   */
+  getLastReconciledRecordCount(): number {
+    try {
+      const row = this.db
+        .prepare("SELECT value FROM index_metadata WHERE key = 'reconciled_count'")
+        .get() as { value: string } | undefined;
+      return row ? parseInt(row.value, 10) : 0;
+    } catch {
+      return 0;
+    }
+  }
+
+  /**
+   * Persists the count of records recorded during last reconciliation.
+   */
+  setLastReconciledRecordCount(count: number): void {
+    try {
+      this.db
+        .prepare(
+          `
+        INSERT INTO index_metadata (key, value) VALUES ('reconciled_count', ?)
+        ON CONFLICT(key) DO UPDATE SET value = excluded.value
+      `,
+        )
+        .run(String(count));
+    } catch {
+      // Ignore non-fatal metadata write error
+    }
   }
 
   indexRecord(record: MemoryRecord): void {
@@ -94,11 +163,56 @@ export class SqliteIndex {
       for (const record of records) {
         this.indexRecord(record);
       }
+      this.markIndexDirty(false);
+      this.setLastReconciledRecordCount(records.length);
       this.db.exec('COMMIT');
     } catch (e) {
       this.db.exec('ROLLBACK');
+      this.markIndexDirty(true);
       throw e;
     }
+  }
+
+  /**
+   * Reconciles the secondary SQLite projection against canonical records from JSONL.
+   * If SQLite is marked dirty, record counts mismatch, or IDs are missing,
+   * a transactional rebuild is executed automatically.
+   */
+  reconcileWithCanonical(canonicalRecords: MemoryRecord[]): {
+    rebuilt: boolean;
+    syncedCount: number;
+  } {
+    const isDirty = this.isIndexDirty();
+    const countRow = this.db.prepare('SELECT COUNT(*) as count FROM records').get() as
+      | { count: number }
+      | undefined;
+    const sqliteCount = countRow?.count ?? 0;
+
+    if (isDirty || sqliteCount !== canonicalRecords.length) {
+      this.rebuildIndex(canonicalRecords);
+      return { rebuilt: true, syncedCount: canonicalRecords.length };
+    }
+
+    // Verify all canonical IDs exist in SQLite
+    const existingIds = new Set(
+      (this.db.prepare('SELECT id FROM records').all() as { id: string }[]).map((r) => r.id),
+    );
+    let missingFound = false;
+    for (const rec of canonicalRecords) {
+      if (!existingIds.has(rec.id)) {
+        missingFound = true;
+        break;
+      }
+    }
+
+    if (missingFound) {
+      this.rebuildIndex(canonicalRecords);
+      return { rebuilt: true, syncedCount: canonicalRecords.length };
+    }
+
+    this.markIndexDirty(false);
+    this.setLastReconciledRecordCount(canonicalRecords.length);
+    return { rebuilt: false, syncedCount: canonicalRecords.length };
   }
 
   findByFingerprint(

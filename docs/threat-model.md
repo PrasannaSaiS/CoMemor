@@ -78,7 +78,8 @@
 ### 3.6 Elevation of Privilege (E)
 - **Threat:** An agent executes malicious commands via `verify_fix` or is hijacked via Persisted-Retrieval Poisoning.
 - **Mitigation:**
-  - Command Execution Policy (ADR-006): Dry-run by default, strict command allowlist (no arbitrary shell scripts), workspace boundary enforcement.
+  - In-Process Execution Disabled: CoMemor does not execute remediation commands directly in-process. `verify_fix` acts as an advisory policy validation and risk assessment engine that returns a structured command proposal with required user-confirmation metadata (`requiresHostConfirmation: true`, `executedByServer: false`). Command execution remains strictly with the host IDE/agent under its native approval flow.
+  - Command Policy Engine: Prohibits shell metacharacters and chaining, destructive commands, inline code execution flags (`python -c`, `bun -e`), unvetted remote URLs/downloads, and workspace path escapes.
   - Persisted-Retrieval Poisoning Defense (ADR-009): Sanitization envelopes around untrusted outputs, heuristic flagging for prompt injection tokens, and provenance-weighted trust decay.
 
 ---
@@ -115,6 +116,7 @@ Specifically, it does NOT defend against:
 1. **Novel or Paraphrased Semantic Injections:** Natural-language adversarial framing that does not use recognized keywords, delimiters, or high imperative density (e.g., subtle multi-turn gaslighting, plausible pseudo-technical arguments that mislead an agent into unintended actions).
 2. **Context-Dependent Semantic Manipulation:** Legitimate-sounding commands that are subtly malicious in a specific repository environment (e.g., suggesting an innocent-looking `npm install <typosquatted-package>` or altering a configuration flag that weakens security).
 3. **Model-Level Tokenizer & Attention Exploits:** Adversarial token sequences designed to disrupt LLM attention mechanisms or trigger unintended tokenizer merge states.
-4. **Execution-Level Sandboxing:** The detector does NOT execute, sandbox, or isolate runtime processes; safety at execution time relies strictly on `verify_fix` command allowlisting, workspace containment, and human approval files (`approvals-resolved.jsonl`).
-5. **Pre-Compromised Upstream Repositories:** If the Git repository itself is attacker-controlled, commit provenance checks can be satisfied legitimately by the attacker.
-6. **Blind Automated Execution by Consuming Agents:** If a consuming agent ignores the `<untrusted_historical_memory>` warning delimiters and blindly feeds the content directly into an unconstrained system or execution context, the envelope cannot enforce compliance at the LLM level.
+4. **Execution-Level Sandboxing:** The server does NOT execute, sandbox, or isolate runtime processes; safety at execution time relies strictly on host IDE/agent approval mechanisms. CoMemor never treats `shell: false`, binary allowlists, dashboard buttons, or workspace-editable files (`approvals-resolved.jsonl`) as OS-level sandboxes or strong human authorization boundaries. All in-process command execution is disabled.
+5. **Protocol Specification:** The server is pinned to `@modelcontextprotocol/sdk@1.32.2` implementing the standard MCP 1.x stream (2024-11-05 baseline).
+6. **Pre-Compromised Upstream Repositories:** If the Git repository itself is attacker-controlled, commit provenance checks can be satisfied legitimately by the attacker.
+7. **Blind Automated Execution by Consuming Agents:** If a consuming agent ignores the `<untrusted_historical_memory>` warning delimiters and blindly feeds the content directly into an unconstrained system or execution context, the envelope cannot enforce compliance at the LLM level.
