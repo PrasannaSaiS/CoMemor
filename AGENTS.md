@@ -1,4 +1,4 @@
-# AGENTS.md �CoMemorp
+# AGENTS.md CoMemor
 
 Preserve protocol correctness: stdout is JSON-RPC only; all logs go to stderr AND
 to .agent-memory/logs.jsonl for the dashboard. Never write to stdout for any
