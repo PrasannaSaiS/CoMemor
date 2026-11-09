@@ -1,11 +1,12 @@
-import { useState, type ReactNode } from 'react';
+import { useState, useEffect, type ReactNode } from 'react';
 import type { PendingApproval } from '../types.js';
 import { ConfirmButton } from './shared/ConfirmButton.js';
 
 interface Props {
-  approvals: PendingApproval[];
+  approvals?: PendingApproval[];
   isLoading?: boolean;
   onDecision: (id: string, decision: 'approve' | 'deny', notes?: string) => Promise<boolean>;
+  onRefresh?: () => Promise<void>;
 }
 
 function IconShield(): ReactNode {
@@ -16,9 +17,15 @@ function IconShield(): ReactNode {
   );
 }
 
-export function ApprovalQueueScreen({ approvals, isLoading, onDecision }: Props): ReactNode {
+export function ApprovalQueueScreen({ approvals = [], isLoading, onDecision, onRefresh }: Props): ReactNode {
   const [operatorNotes, setOperatorNotes] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (onRefresh) {
+      void onRefresh();
+    }
+  }, [onRefresh]);
 
   const handleAction = async (id: string, decision: 'approve' | 'deny') => {
     setIsSubmitting(id);
@@ -36,8 +43,8 @@ export function ApprovalQueueScreen({ approvals, isLoading, onDecision }: Props)
     }
   };
 
-  const getRiskBadge = (level: string) => {
-    switch (level.toUpperCase()) {
+  const getRiskBadge = (level?: string) => {
+    switch (level?.toUpperCase()) {
       case 'HIGH':
         return <span className="badge rose">HIGH RISK LEVEL</span>;
       case 'MEDIUM':
@@ -99,7 +106,7 @@ export function ApprovalQueueScreen({ approvals, isLoading, onDecision }: Props)
       ) : (
         <div className="approval-list">
           {approvals.map((appr) => {
-            const isHighRisk = appr.risk.level.toUpperCase() === 'HIGH';
+            const isHighRisk = appr.risk?.level?.toUpperCase() === 'HIGH';
             const isSubmittingThis = isSubmitting === appr.approvalId;
 
             return (
@@ -114,7 +121,7 @@ export function ApprovalQueueScreen({ approvals, isLoading, onDecision }: Props)
                   <div>
                     <div className="approval-meta-row">
                       <span className="mono approval-id">{appr.approvalId}</span>
-                      {getRiskBadge(appr.risk.level)}
+                      {getRiskBadge(appr.risk?.level)}
                       {appr.recordId && <span className="mono badge gray">Ref Record: {appr.recordId}</span>}
                     </div>
                     <div className="approval-timestamp">
@@ -153,7 +160,7 @@ export function ApprovalQueueScreen({ approvals, isLoading, onDecision }: Props)
                 <div style={{ marginBottom: '1rem' }}>
                   <div className="mini-label">Security Policy Findings:</div>
                   <div className="risk-badges">
-                    {appr.risk.reasons.map((r, i) => (
+                    {(appr.risk?.reasons ?? []).map((r, i) => (
                       <span key={i} className={`badge ${isHighRisk ? 'rose' : 'gray'}`}>
                         {r}
                       </span>

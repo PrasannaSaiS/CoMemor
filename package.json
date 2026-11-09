@@ -27,7 +27,7 @@
     "type": "git",
     "url": "git+https://github.com/PrasannaSaiS/CoMemor.git"
   },
-  "license": "CC-BY-NC-4.0",
+  "license": "GPL-3.0-only",
   "author": "Prasanna Sai",
   "type": "module",
   "main": "dist/server.js",

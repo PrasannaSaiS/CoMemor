@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Memory Console — observability dashboard for CoMemor. React + Vite frontend, talks only to the dashboard-bridge.",
   "type": "module",
-  "license": "MIT",
+  "license": "GPL-3.0-only",
   "author": "Prasanna Sai",
   "repository": {
     "type": "git",

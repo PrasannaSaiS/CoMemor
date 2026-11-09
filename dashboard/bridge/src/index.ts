@@ -155,6 +155,25 @@ export function buildServer(customMemoryDir?: string) {
     return storage.getPendingApprovals();
   });
 
+  fastify.get('/api/approvals', async () => {
+    return storage.getPendingApprovals();
+  });
+
+  fastify.get('/approvals', async (request, reply) => {
+    if (
+      request.headers.accept &&
+      !request.headers.accept.includes('text/html') &&
+      request.headers.accept.includes('application/json')
+    ) {
+      return storage.getPendingApprovals();
+    }
+    const dist = findFrontendDist();
+    if (dist) {
+      return reply.sendFile('index.html');
+    }
+    return storage.getPendingApprovals();
+  });
+
   // 5. Operator approval decision (ONLY permitted mutation)
   fastify.post('/api/approvals/:id/decision', async (request, reply) => {
     const { id } = request.params as { id: string };
