@@ -44,3 +44,28 @@ Thumbs.db
 .env
 .env.*
 !.env.example
+
+
+# Local CoMemor runtime state
+.agent-memory/
+.agent-memory/**
+
+# Local agent tools and generated design references
+.agents/skills/shadcn/
+
+# Visual QA artifacts
+dashboard/qa-screenshots/
+
+# Local environment files
+.env
+.env.*
+!.env.example
+
+# Generated builds and caches
+node_modules/
+dist/
+build/
+coverage/
+dist-benchmark/
+*.tsbuildinfo
+*.tgz
