@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Read-only bridge between CoMemor data files and the dashboard frontend. Uses node:sqlite (built-in, no native build required).",
   "type": "module",
-  "license": "MIT",
+  "license": "GPL-3.0-only",
   "author": "Prasanna Sai",
   "repository": {
     "type": "git",

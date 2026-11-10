@@ -77,13 +77,13 @@ export function ApprovalQueueScreen({ approvals = [], isLoading, onDecision, onR
       <div className="screen-header">
         <div className="screen-title-row">
           <div>
-            <h1 className="screen-title">Human-in-the-Loop Approval Queue</h1>
+            <h1 className="screen-title">Fix Proposal Review Queue</h1>
             <p className="screen-subtitle">
-              Dry-run safety control surface. Intercepts non-allowlisted agent repair commands prior to live shell execution.
+              Human-in-the-loop review of proposed fix commands. Recording a decision here writes an audit entry to approvals-resolved.jsonl. CoMemor does not execute commands — your host IDE or agent handles execution after you review and approve the proposal.
             </p>
           </div>
           <div className="badge gray">
-            {approvals.length} Pending Execution Authorization{approvals.length === 1 ? '' : 's'}
+            {approvals.length} Pending Review{approvals.length === 1 ? '' : 's'}
           </div>
         </div>
       </div>
@@ -94,9 +94,9 @@ export function ApprovalQueueScreen({ approvals = [], isLoading, onDecision, onR
             <div className="empty-state-icon">
               <IconShield />
             </div>
-            <h2 className="empty-state-title">Approval Queue Clean</h2>
+            <h2 className="empty-state-title">No Pending Proposals</h2>
             <p className="empty-state-desc">
-              Zero execution authorizations are pending. When an agent calls verify_fix with a non-allowlisted command or high-risk shell arguments, the execution barrier intercepts it here for operator authorization.
+              No fix proposals are awaiting review. When an agent calls verify_fix with a non-allowlisted command or dryRun: false, CoMemor logs the proposal here for operator review. Recording a decision writes an audit entry — your IDE or agent handles actual execution.
             </p>
             <div style={{ marginTop: '1.25rem' }}>
               <span className="badge emerald">Dry-Run Protection Active</span>
@@ -137,23 +137,23 @@ export function ApprovalQueueScreen({ approvals = [], isLoading, onDecision, onR
                       disabled={isSubmittingThis}
                       onConfirm={() => handleAction(appr.approvalId, 'deny')}
                     >
-                      {isSubmittingThis ? 'Submitting…' : 'Deny & Terminate'}
+                      {isSubmittingThis ? 'Submitting…' : 'Record Denial'}
                     </ConfirmButton>
 
                     <ConfirmButton
                       confirmLabel="Approve"
-                      confirmText="Confirm authorize?"
+                      confirmText="Confirm review complete?"
                       variant="success"
                       disabled={isSubmittingThis}
                       onConfirm={() => handleAction(appr.approvalId, 'approve')}
                     >
-                      {isSubmittingThis ? 'Authorizing…' : 'Authorize Execution'}
+                      {isSubmittingThis ? 'Recording…' : 'Record Approval'}
                     </ConfirmButton>
                   </div>
                 </div>
 
                 <div style={{ marginBottom: '0.85rem' }}>
-                  <div className="mini-label">Intercepted Command Plan:</div>
+                  <div className="mini-label">Proposed Fix Command:</div>
                   <div className="code-block mono approval-command">$ {appr.requestedCommand}</div>
                 </div>
 
@@ -170,7 +170,7 @@ export function ApprovalQueueScreen({ approvals = [], isLoading, onDecision, onR
 
                 <div>
                   <label htmlFor={`notes-${appr.approvalId}`} className="field-label">
-                    Operator Audit Notes (logged immutably to approvals-resolved.jsonl):
+                    Operator Review Notes (logged to approvals-resolved.jsonl — audit trail only, not execution authorization):
                   </label>
                   <input
                     id={`notes-${appr.approvalId}`}

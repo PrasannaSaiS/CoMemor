@@ -1,8 +1,10 @@
 /**
- * Command Policy & Sandboxed Execution Engine.
- * Phase 4 implementation.
- *
+ * Command Policy Engine.
  * ADR-006 compliant.
+ *
+ * Server-side command execution has been permanently removed.
+ * verifyFix() performs policy assessment only and returns a structured proposal.
+ * Actual execution remains strictly with the host agent or IDE.
  */
 
 import fs from 'node:fs';
@@ -205,7 +207,8 @@ export class CommandPolicyEngine {
   }
 
   /**
-   * Checks if an execution has been explicitly approved in .agent-memory/approvals-resolved.jsonl.
+   * Reads approvals-resolved.jsonl and checks if a command has a matching resolved entry.
+   * This is used only as an audit-trail check; it does NOT authorize CoMemor to execute anything.
    * Hardened against malformed JSON lines and approval ID hijacking.
    */
   hasResolvedApproval(commandString: string, approvalId?: string): boolean {

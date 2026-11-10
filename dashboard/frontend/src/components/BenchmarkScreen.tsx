@@ -89,7 +89,11 @@ export function BenchmarkScreen({ onFetchBenchmarks }: Props): ReactNode {
             <h2>Benchmark Protocol</h2>
             <p>Measures time-to-repair, tool usage, success rate, and false reuse avoidance.</p>
           </div>
-          <span className="badge emerald">B3 Benchmark Target Achieved</span>
+          {data.status !== 'pre_evaluation' ? (
+            <span className="badge emerald">B3 Benchmark Target Achieved</span>
+          ) : (
+            <span className="badge gray">Pre-Evaluation — Run benchmark:run to populate</span>
+          )}
         </div>
       </div>
 
@@ -172,7 +176,7 @@ export function BenchmarkScreen({ onFetchBenchmarks }: Props): ReactNode {
                   <td><strong>{String(label)}</strong></td>
                   <td><span className="mono" style={{ color: 'var(--status-success)', fontWeight: 600 }}>{String(p50)} ms</span></td>
                   <td><span className="mono" style={{ color: 'var(--status-success)', fontWeight: 600 }}>{String(p95)} ms</span></td>
-                  <td><span className="badge emerald">PASSED</span></td>
+                  <td>{data.status === 'pre_evaluation' ? <span className="badge gray">Not validated</span> : <span className="badge emerald">PASSED</span>}</td>
                   <td style={{ color: 'var(--text-secondary)' }}>{String(engine)}</td>
                 </tr>
               ))}
