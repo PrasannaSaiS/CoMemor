@@ -200,14 +200,19 @@ function DashboardShell(): ReactNode {
     }
   };
 
-  const fetchApprovals = async () => {
+  const fetchApprovals = useCallback(async () => {
     try {
-      const res = await fetch('/api/pending-approvals');
-      if (res.ok) setApprovals(await res.json());
+      const res = await fetch('/api/approvals');
+      if (res.ok) {
+        setApprovals(await res.json());
+        return;
+      }
+      const fallback = await fetch('/api/pending-approvals');
+      if (fallback.ok) setApprovals(await fallback.json());
     } catch (e) {
       console.warn('Failed to fetch approvals from bridge:', e);
     }
-  };
+  }, []);
 
   const handleFetchRecordDetail = async (id: string): Promise<FullMemoryRecord | null> => {
     try {
@@ -473,7 +478,14 @@ function DashboardShell(): ReactNode {
           />
           <Route
             path="/approvals"
-            element={<ApprovalQueueScreen approvals={approvals} isLoading={isLoading} onDecision={handleDecision} />}
+            element={
+              <ApprovalQueueScreen
+                approvals={approvals}
+                isLoading={isLoading}
+                onDecision={handleDecision}
+                onRefresh={fetchApprovals}
+              />
+            }
           />
           <Route path="/security" element={<SecurityAuditScreen onFetchAudit={handleFetchAudit} />} />
           <Route path="/benchmarks" element={<BenchmarkScreen onFetchBenchmarks={handleFetchBenchmarks} />} />

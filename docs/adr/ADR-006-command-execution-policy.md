@@ -39,13 +39,22 @@ Only explicitly recognized test, build, and package commands are allowed:
 - Path traversal outside workspace (`../`) is prohibited.
 - Execution environment variables are scrubbed; only minimal system PATH and safe Node environment variables are inherited. Sensitive credentials (`GITHUB_TOKEN`, `AWS_*`, `NPM_TOKEN`) are explicitly wiped from child process environments.
 
-### 4. Human Approval Workflow for Live Execution
-- If an agent requests live execution for a command classified with medium or high risk, `CoMemor` queues the request in `.agent-memory/approvals-pending.jsonl`.
-- The MCP server returns a status of `pending_approval` with an `approvalId`.
-- Execution can only proceed after a human operator marks the item approved in `.agent-memory/approvals-resolved.jsonl` (typically via the Memory Console Dashboard).
+### 4. No Server-Side Execution — Proposal-Only Mode
+
+**Server-side command execution has been permanently removed from CoMemor.**
+
+- `verify_fix` performs policy assessment only: it validates the proposed command against the allowlist and safety rules, then returns a structured proposal with `requiresHostConfirmation: true` and `executedByServer: false`.
+- When `dryRun: false` is passed, CoMemor logs the proposal to `.agent-memory/approvals-pending.jsonl` for operator audit trail and returns `status: pending_approval` with an `approvalId`.
+- The entry in `approvals-resolved.jsonl` written by the operator dashboard is an **audit record only**. It does not trigger execution and is not read back by CoMemor as an execution signal.
+- **Actual execution must be initiated by the host agent or IDE** using its own native user-confirmation flow, after the operator has reviewed the proposed command.
 
 ## Consequences
 
 - **Positive:** Eliminates arbitrary remote code execution (RCE) via memory retrieval or compromised MCP tool inputs.
-- **Positive:** Enforces human-in-the-loop oversight for state-changing commands.
-- **Negative:** Agents cannot autonomously run arbitrary custom scripts without prior operator allowlisting or approval.
+- **Positive:** Enforces human-in-the-loop oversight for all state-changing commands.
+- **Positive:** No execution surface within the MCP server process — reduces attack surface to zero for command injection.
+- **Negative:** Agents cannot autonomously apply fixes without the user manually running the proposed command in the host IDE or agent.
+
+## Status Update (Phase 1 Hardening)
+
+Server-side command execution was removed entirely in the Phase 1 security hardening (v1.0.5). The `verifyFix` method now returns a policy assessment and structured proposal. The `hasResolvedApproval` helper remains for audit log inspection but does not gate any execution path.

@@ -105,21 +105,24 @@ export const VERIFY_FIX_SCHEMA: ToolInputSchema = {
   properties: {
     recordId: {
       type: 'string',
-      description: 'Optional record ID associated with the fix being verified.',
+      description: 'Optional record ID associated with the fix proposal being evaluated.',
     },
     command: {
       type: 'string',
-      description: 'The remediation or test command to run/verify.',
+      description:
+        'The proposed remediation command to validate against safety policy. CoMemor never executes this command — the structured proposal is returned for the host agent or IDE to execute under its own confirmation mechanism.',
     },
     dryRun: {
       type: 'boolean',
       default: true,
-      description: 'If true, checks command policy without executing. Defaults to true for safety.',
+      description:
+        'If true (default), validates the command against policy and returns a structured proposal without queuing an approval entry. If false, additionally logs the proposal to approvals-pending.jsonl for operator audit. No execution occurs in either case.',
     },
     allowApprovalQueue: {
       type: 'boolean',
       default: true,
-      description: 'If true, queues medium/high risk commands for human dashboard approval.',
+      description:
+        'If true, allows logging a dryRun:false proposal to approvals-pending.jsonl as an audit trail entry. This entry does not authorize execution — it is a read-only audit record for the operator dashboard.',
     },
   },
   required: ['command'],

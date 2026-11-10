@@ -155,7 +155,29 @@ export function buildServer(customMemoryDir?: string) {
     return storage.getPendingApprovals();
   });
 
-  // 5. Operator approval decision (ONLY permitted mutation)
+  fastify.get('/api/approvals', async () => {
+    return storage.getPendingApprovals();
+  });
+
+  fastify.get('/approvals', async (request, reply) => {
+    if (
+      request.headers.accept &&
+      !request.headers.accept.includes('text/html') &&
+      request.headers.accept.includes('application/json')
+    ) {
+      return storage.getPendingApprovals();
+    }
+    const dist = findFrontendDist();
+    if (dist) {
+      return reply.sendFile('index.html');
+    }
+    return storage.getPendingApprovals();
+  });
+
+  // 5. Operator approval decision (ONLY permitted mutation).
+  // Records the human operator's decision (approve/deny) to approvals-resolved.jsonl.
+  // This is an audit log entry ONLY — it does NOT trigger or authorize command execution.
+  // CoMemor has no execution capability; actual execution is handled by the host IDE/agent.
   fastify.post('/api/approvals/:id/decision', async (request, reply) => {
     const { id } = request.params as { id: string };
     const body = request.body as
@@ -177,8 +199,8 @@ export function buildServer(customMemoryDir?: string) {
     };
   });
 
-  // 6. Benchmarks / evaluation data (placeholder for Phase 8)
-  fastify.get('/api/benchmarks/latest', async () => {
+  // 6. Benchmarks / evaluation data
+  fastify.get('/api/benchmarks/latest', async (_request, reply) => {
     const benchmarkPath = path.join(memoryDir, 'benchmarks-latest.json');
     if (fs.existsSync(benchmarkPath)) {
       try {
@@ -186,52 +208,11 @@ export function buildServer(customMemoryDir?: string) {
       } catch {}
     }
 
-    // Default baseline dataset matching Phase 8 evaluation spec
-    return {
-      status: 'pre_evaluation',
-      description:
-        'Phase 8 Benchmark Baselines: B0 (No Memory), B1 (Exact Fingerprint), B2 (Fuzzy + Trust), B3 (Full Verified Memory)',
-      baselines: [
-        {
-          name: 'B0: No Memory',
-          timeToRepairSec: 142,
-          toolCalls: 8.4,
-          successRate: 0.42,
-          falseReuseRate: 0.0,
-        },
-        {
-          name: 'B1: Exact Fingerprint',
-          timeToRepairSec: 34,
-          toolCalls: 2.1,
-          successRate: 0.81,
-          falseReuseRate: 0.04,
-        },
-        {
-          name: 'B2: Fuzzy + Trust',
-          timeToRepairSec: 28,
-          toolCalls: 2.4,
-          successRate: 0.88,
-          falseReuseRate: 0.06,
-        },
-        {
-          name: 'B3: Full Verified',
-          timeToRepairSec: 18,
-          toolCalls: 1.8,
-          successRate: 0.94,
-          falseReuseRate: 0.01,
-        },
-      ],
-      retrievalLatencyMs: {
-        records100: { p50: 0.4, p95: 1.2 },
-        records1000: { p50: 1.1, p95: 3.4 },
-        records10000: { p50: 3.8, p95: 9.6 },
-      },
-      ablations: [
-        { name: 'Without Redaction', riskScore: 'High', latencyDeltaMs: -0.2 },
-        { name: 'Without Stale Lockfile Check', staleReusePercent: 24.8, latencyDeltaMs: -0.5 },
-        { name: 'Without Provenance Decay', poisonedRetrievalPercent: 32.1, latencyDeltaMs: -0.1 },
-      ],
-    };
+    // No real benchmark data available yet.
+    return reply.status(404).send({
+      error: 'No benchmark data available.',
+      hint: 'Run the evaluation harness (npm run benchmark:run) to generate real results.',
+    });
   });
 
   // 7. Security & Redaction audit stats
@@ -244,8 +225,8 @@ export function buildServer(customMemoryDir?: string) {
         {
           layer: 'Layer 1: Deterministic Regex Patterns',
           status: 'active',
-          recall: 1.0,
           patterns: ['GitHub PAT', 'AWS Keys', 'OpenAI/Anthropic Keys', 'JWT', 'PEM'],
+          note: 'Pattern coverage is based on known credential formats; novel or custom secret formats may not be caught.',
         },
         {
           layer: 'Layer 2: Shannon Entropy Scoring',
@@ -277,6 +258,7 @@ export function buildServer(customMemoryDir?: string) {
           { id: 'homoglyph', name: 'Unicode Homoglyphs (Cyrillic/Greek)', status: 'active' },
           { id: 'imperative_density', name: 'Imperative Verb Density Analysis', status: 'active' },
         ],
+        note: 'Poisoning detection uses heuristics. Adversarial records with novel evasion techniques may not be flagged.',
       },
     };
   });
@@ -301,29 +283,34 @@ export function buildServer(customMemoryDir?: string) {
           ? storage.getRecordById(records[0].id)
           : null;
 
+    if (records.length === 0) {
+      return {
+        query: queryParams.query ?? null,
+        threshold: 0.65,
+        candidates: [],
+        note: 'No records found. Record some failures first using the record_failure MCP tool.',
+      };
+    }
+
+    // Return real record fields where available; similarity scores require the
+    // retrieval engine and are not computable in the bridge. Reflect that honestly.
     return {
-      query: queryParams.query ?? target?.command ?? 'npm run build',
-      threshold: 0.7,
-      candidates: records.slice(0, 5).map((r, idx) => ({
+      query: queryParams.query ?? target?.command ?? null,
+      threshold: 0.65,
+      candidates: records.slice(0, 5).map((r) => ({
         id: r.id,
         command: r.command,
         commandFamily: r.commandFamily,
-        matchType: idx === 0 ? 'exact' : 'fuzzy',
-        similarityScore: idx === 0 ? 1.0 : Number((0.92 - idx * 0.08).toFixed(2)),
-        trustScore: r.isQuarantined
-          ? 0.45
-          : r.wilsonLowerBound
-            ? Number((0.5 + 0.5 * r.wilsonLowerBound).toFixed(2))
-            : 0.85,
-        passesThreshold: idx < 3,
-        passedFilters: {
-          repository: true,
-          commandFamily: true,
-          exitCode: true,
-        },
-        staleReasons: idx === 2 ? ['lockfile_hash_mismatch'] : [],
-        isStale: idx === 2,
+        // matchType and similarity are only known by the MCP server retrieval engine
+        matchType: null,
+        similarityScore: null,
+        trustScore: r.wilsonLowerBound ?? null,
+        passesThreshold: null,
+        passedFilters: null,
+        staleReasons: [],
+        isStale: false,
         isQuarantined: r.isQuarantined,
+        note: 'Similarity scores are computed at retrieval time by the MCP server. Use find_fix to see actual match results.',
       })),
     };
   });
@@ -333,7 +320,7 @@ export function buildServer(customMemoryDir?: string) {
     reply.raw.setHeader('Content-Type', 'text/event-stream');
     reply.raw.setHeader('Cache-Control', 'no-cache');
     reply.raw.setHeader('Connection', 'keep-alive');
-    reply.raw.setHeader('Access-Control-Allow-Origin', '*');
+    reply.raw.setHeader('Access-Control-Allow-Origin', 'http://127.0.0.1:4321');
     reply.raw.flushHeaders?.();
 
     // Send recent events first

@@ -32,7 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Input Length Protections:**
   - Added strict `max()` constraints to Zod schemas (commands: 1024 chars, output: 128KB, explanation: 32KB, fix commands: max 20, tags: max 50).
 - **Licensing & Specification Alignment:**
-  - Project license updated to source-available `CC-BY-NC-4.0`.
+  - Project license is `GPL-3.0-only` (GNU General Public License v3). GPL permits commercial use and redistribution subject to copyleft requirements; it does not impose the network-use source-disclosure requirement found in AGPL-3.0.
   - Clarified supported MCP specification baseline as SDK 1.x / `2024-11-05` (SDK v2 / spec 2026-07-28 tracked separately in ADR-007).
 
 ---

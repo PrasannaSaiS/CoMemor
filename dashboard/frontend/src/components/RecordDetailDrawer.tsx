@@ -84,10 +84,10 @@ export function RecordDetailDrawer({ record, onClose }: Props): ReactNode {
           </div>
 
           <div style={{ marginBottom: '1.35rem' }}>
-            <h3 style={{ fontSize: '0.88rem', fontWeight: 600, marginBottom: '0.45rem', color: 'var(--text-primary)' }}>Proposed Fix Rationale & Execution Plan</h3>
+            <h3 style={{ fontSize: '0.88rem', fontWeight: 600, marginBottom: '0.45rem', color: 'var(--text-primary)' }}>Proposed Fix Rationale</h3>
             <div style={{ background: 'var(--bg-subtle)', padding: '0.95rem', borderRadius: '6px', border: '1px solid var(--border-subtle)' }}>
               <p style={{ fontSize: '0.84rem', color: 'var(--text-secondary)', marginBottom: '0.65rem', lineHeight: 1.45 }}>{record.fix?.explanation || record.fixExplanation}</p>
-              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.35rem', fontWeight: 600 }}>Executable Repair Commands:</div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.35rem', fontWeight: 600 }}>Proposed Fix Commands:</div>
               {(record.fix?.commands || record.fixCommands || []).map((cmd, i) => (
                 <div key={i} className="code-block mono" style={{ margin: '0.25rem 0', fontSize: '0.8rem' }}>$ {cmd}</div>
               ))}
