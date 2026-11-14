@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CoMemor — Persistent engineering memory for AI coding agents</title>
+<meta name="description" content="Stop debugging the same errors twice. CoMemor equips your AI coding agents with repository-scoped persistent memory, turning past command failures and fixes into instant solutions.">
+<meta name="theme-color" content="#ffffff">
+<link rel="canonical" href="https://prasannasais.github.io/comemor/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="CoMemor — Persistent engineering memory for AI coding agents">
+<meta property="og:description" content="Stop debugging the same errors twice. Repository-scoped persistent memory for AI coding agents via MCP. Local-first, open source, never executes commands.">
+<meta property="og:url" content="https://prasannasais.github.io/comemor/">
+<meta property="og:image" content="https://github.com/user-attachments/assets/5b9799f5-5c07-48c1-91b3-3a08ae65312f">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" type="image/png" href="assets/comemor-logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1b1c1e; --ink-2:#4a4d52; --ink-3:#73777d;
+  --bg:#ffffff; --bg-soft:#f7f8f9; --bg-warm:#fbfbfa;
+  --line:#e7e8ea; --line-soft:#eef0f2;
+  --blue:#1a73e8; --blue-dark:#1557b0;
+  --grad:linear-gradient(90deg,#4285f4,#9b72cb,#d96570,#f2a60c);
+  --radius:18px; --radius-lg:28px;
+  --shadow-sm:0 1px 2px rgba(20,22,25,.05),0 4px 14px rgba(20,22,25,.05);
+  --shadow-md:0 2px 6px rgba(20,22,25,.06),0 18px 44px rgba(20,22,25,.10);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',system-ui,sans-serif;color:var(--ink);background:var(--bg);line-height:1.6;-webkit-font-smoothing:antialiased}
+h1,h2,h3,.wordmark{font-family:'Sora','Inter',sans-serif;letter-spacing:-.02em}
+a{color:inherit;text-decoration:none}
+.wrap{max-width:1160px;margin:0 auto;padding:0 28px}
+code,.mono{font-family:'JetBrains Mono',monospace}
+/* ---------- announcement ---------- */
+.announce{background:#0f1115;color:#e8eaed;font-size:13.5px;padding:9px 0;text-align:center}
+.announce .tag{background:var(--grad);color:#fff;font-weight:700;font-size:11px;padding:2px 9px;border-radius:999px;margin-right:10px;letter-spacing:.04em}
+.announce a{color:#8ab4f8;font-weight:600;margin-left:8px}
+/* ---------- nav ---------- */
+nav{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.82);backdrop-filter:blur(14px);border-bottom:1px solid var(--line-soft)}
+.nav-in{display:flex;align-items:center;justify-content:space-between;height:68px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:19px}
+.logo-mark{width:34px;height:34px;border-radius:9px;overflow:hidden;display:grid;place-items:center}
+.logo-mark img{width:100%;height:100%;object-fit:cover;display:block;border-radius:9px}
+.nav-links{display:flex;gap:30px;font-size:14.5px;color:var(--ink-2);font-weight:500}
+.nav-links a:hover{color:var(--ink)}
+.nav-cta{display:flex;align-items:center;gap:12px}
+.btn{display:inline-flex;align-items:center;gap:8px;border-radius:999px;font-weight:600;font-size:14.5px;padding:11px 22px;transition:.18s;border:1px solid transparent;cursor:pointer}
+.btn-dark{background:#1b1c1e;color:#fff}
+.btn-dark:hover{background:#000;transform:translateY(-1px);box-shadow:var(--shadow-sm)}
+.btn-ghost{border-color:var(--line);color:var(--ink);background:#fff}
+.btn-ghost:hover{border-color:#c9ccd1;background:var(--bg-soft)}
+.btn-blue{background:var(--blue);color:#fff}
+.btn-blue:hover{background:var(--blue-dark);transform:translateY(-1px);box-shadow:var(--shadow-sm)}
+/* ---------- hero ---------- */
+.hero{padding:96px 0 56px;text-align:center;position:relative;overflow:hidden;background:
+  radial-gradient(900px 420px at 15% -10%,rgba(66,133,244,.07),transparent 60%),
+  radial-gradient(900px 420px at 85% -10%,rgba(242,166,12,.07),transparent 60%),#fff}
+.pill{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:999px;padding:7px 16px;font-size:13px;font-weight:600;color:var(--ink-2);background:#fff;box-shadow:var(--shadow-sm)}
+.pill .dot{width:7px;height:7px;border-radius:50%;background:#34a853}
+.hero h1{font-size:clamp(42px,6.2vw,76px);font-weight:700;line-height:1.06;margin:28px auto 0;max-width:980px}
+.type-wrap{display:inline}
+.caret{display:inline-block;width:4px;height:.92em;background:var(--grad);margin-left:4px;vertical-align:-0.12em;animation:blink 1s steps(1) infinite;border-radius:2px}
+@keyframes blink{50%{opacity:0}}
+.hero p.sub{max-width:720px;margin:26px auto 0;font-size:19px;color:var(--ink-2)}
+.hero-ctas{display:flex;gap:14px;justify-content:center;margin-top:36px;flex-wrap:wrap}
+.install-chip{display:inline-flex;align-items:center;gap:14px;margin-top:26px;background:#0f1115;color:#d6f5d6;border-radius:14px;padding:13px 20px;font-size:15px;box-shadow:var(--shadow-md)}
+.install-chip .dollar{color:#8ab4f8}
+.install-chip button{background:#2a2d33;border:none;color:#e8eaed;border-radius:8px;padding:5px 12px;font-size:12px;cursor:pointer;font-family:'Inter';font-weight:600}
+.install-chip button:hover{background:#3a3e45}
+.trustline{margin-top:34px;display:flex;gap:26px;justify-content:center;flex-wrap:wrap;font-size:13.5px;color:var(--ink-3);font-weight:500}
+.trustline span{display:inline-flex;align-items:center;gap:7px}
+.trustline svg{width:15px;height:15px;fill:#f2a60c}
+.shot{margin:64px auto 0;max-width:1060px;border-radius:var(--radius-lg);padding:10px;background:linear-gradient(135deg,rgba(66,133,244,.25),rgba(155,114,203,.25),rgba(242,166,12,.25));box-shadow:var(--shadow-md)}
+.shot img{width:100%;display:block;border-radius:20px;border:1px solid var(--line)}
+.shot-cap{font-size:13px;color:var(--ink-3);margin-top:14px}
+/* ---------- logo strip ---------- */
+.strip{padding:44px 0 54px;border-bottom:1px solid var(--line-soft);text-align:center}
+.strip p{font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);font-weight:600}
+.strip .logos{display:flex;gap:18px;justify-content:center;flex-wrap:wrap;margin-top:22px}
+.strip .lg{border:1px solid var(--line);border-radius:12px;padding:10px 22px;font-weight:600;color:var(--ink-2);font-size:15px;background:#fff;display:inline-flex;gap:9px;align-items:center}
+.strip .lg i{width:9px;height:9px;border-radius:3px;display:inline-block}
+/* ---------- sections ---------- */
+section{padding:92px 0}
+.kicker{display:inline-block;font-size:12.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--blue);margin-bottom:14px}
+h2.title{font-size:clamp(30px,4vw,46px);font-weight:700;line-height:1.12;max-width:720px}
+.center{text-align:center}.center h2.title{margin:0 auto}
+p.lead{color:var(--ink-2);font-size:17.5px;max-width:680px;margin-top:18px}
+.center p.lead{margin-left:auto;margin-right:auto}
+/* problem */
+.problem{background:var(--bg-warm);border-top:1px solid var(--line-soft);border-bottom:1px solid var(--line-soft)}
+.split{display:grid;grid-template-columns:1.05fr 1fr;gap:64px;align-items:center}
+.quote-card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:28px;box-shadow:var(--shadow-sm)}
+.quote-card .mono{font-size:13.5px;color:#c5221f;background:#fdecea;border-radius:10px;padding:14px 16px;display:block;white-space:pre-wrap}
+.quote-card .fix{color:#188038;background:#e6f4ea;margin-top:12px}
+.quote-card .meta{font-size:12.5px;color:var(--ink-3);margin-top:14px;display:flex;justify-content:space-between}
+.stat-row{display:flex;gap:40px;margin-top:34px}
+.stat b{font-size:34px;font-family:'Sora';font-weight:700;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.stat span{display:block;font-size:13.5px;color:var(--ink-3);margin-top:4px}
+/* features */
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-top:56px}
+.card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:30px 28px;transition:.2s;box-shadow:var(--shadow-sm)}
+.card:hover{transform:translateY(-4px);box-shadow:var(--shadow-md);border-color:#d8dadd}
+.card .ic{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;font-size:20px;margin-bottom:18px}
+.card h3{font-size:18px;font-weight:600;margin-bottom:9px}
+.card p{font-size:14.5px;color:var(--ink-2)}
+.ic.b{background:#e8f0fe}.ic.p{background:#f3e8fd}.ic.g{background:#e6f4ea}.ic.y{background:#fef7e0}.ic.r{background:#fdecea}.ic.t{background:#e4f7fb}
+/* how it works */
+.how{background:var(--bg-warm);border-top:1px solid var(--line-soft);border-bottom:1px solid var(--line-soft)}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-top:56px}
+.step{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:30px 28px;position:relative;box-shadow:var(--shadow-sm)}
+.step .num{width:34px;height:34px;border-radius:50%;background:#1b1c1e;color:#fff;display:grid;place-items:center;font-weight:700;font-size:14px;margin-bottom:18px;font-family:'Sora'}
+.step h3{font-size:17.5px;margin-bottom:8px}
+.step p{font-size:14.5px;color:var(--ink-2)}
+.step code{font-size:12.5px;background:var(--bg-soft);border:1px solid var(--line);border-radius:6px;padding:2px 7px;color:var(--blue-dark)}
+/* tools table */
+.tools-table{margin-top:56px;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;background:#fff;box-shadow:var(--shadow-sm)}
+.tools-table table{width:100%;border-collapse:collapse;font-size:14.5px}
+.tools-table th{text-align:left;background:var(--bg-soft);padding:15px 22px;font-size:12.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);border-bottom:1px solid var(--line)}
+.tools-table td{padding:17px 22px;border-bottom:1px solid var(--line-soft);vertical-align:top;color:var(--ink-2)}
+.tools-table tr:last-child td{border-bottom:none}
+.tools-table td code{background:#e8f0fe;color:var(--blue-dark);padding:3px 9px;border-radius:7px;font-size:13px;font-weight:600;white-space:nowrap}
+/* security */
+.sec-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:22px;margin-top:52px}
+.sec-card{border:1px solid var(--line);border-radius:var(--radius);padding:28px;background:#fff;box-shadow:var(--shadow-sm)}
+.sec-card h3{font-size:17px;margin-bottom:8px;display:flex;align-items:center;gap:10px}
+.sec-card p{font-size:14.5px;color:var(--ink-2)}
+.badge-g{font-size:11px;font-weight:700;background:#e6f4ea;color:#188038;border-radius:999px;padding:3px 10px;letter-spacing:.05em}
+/* install */
+.install{background:#0f1115;color:#e8eaed;border-radius:var(--radius-lg);padding:64px 56px;display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:center}
+.install h2{font-size:clamp(26px,3vw,36px);color:#fff}
+.install p{color:#b7bbc2;font-size:15.5px;margin-top:14px}
+.term{background:#15181d;border:1px solid #2a2d33;border-radius:14px;overflow:hidden;font-size:14px}
+.term .bar{display:flex;gap:7px;padding:12px 16px;border-bottom:1px solid #2a2d33}
+.term .bar i{width:11px;height:11px;border-radius:50%}
+.term pre{padding:20px 22px;line-height:2;overflow-x:auto;font-family:'JetBrains Mono'}
+.term .c{color:#6f7680}.term .d{color:#8ab4f8}.term .cmd{color:#d6f5d6}
+/* pricing */
+.price-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:22px;margin-top:56px;max-width:860px;margin-left:auto;margin-right:auto}
+.price{border:1px solid var(--line);border-radius:var(--radius-lg);padding:38px 34px;background:#fff;text-align:left;box-shadow:var(--shadow-sm)}
+.price.hl{border:2px solid #1b1c1e;position:relative}
+.price .tagp{position:absolute;top:-13px;left:34px;background:var(--grad);color:#fff;font-size:11.5px;font-weight:700;border-radius:999px;padding:4px 14px;letter-spacing:.05em}
+.price h3{font-size:19px}
+.price .amt{font-size:44px;font-family:'Sora';font-weight:700;margin:14px 0 4px}
+.price .per{font-size:13.5px;color:var(--ink-3)}
+.price ul{list-style:none;margin:24px 0 28px;font-size:14.5px;color:var(--ink-2)}
+.price li{padding:7px 0;display:flex;gap:10px;align-items:flex-start}
+.price li::before{content:"✓";color:#188038;font-weight:700}
+.price .btn{width:100%;justify-content:center}
+/* FAQ */
+details{border:1px solid var(--line);border-radius:14px;background:#fff;margin-top:14px;overflow:hidden}
+summary{cursor:pointer;font-weight:600;padding:19px 24px;font-size:15.5px;list-style:none;display:flex;justify-content:space-between;align-items:center}
+summary::after{content:"+";font-size:20px;color:var(--ink-3);font-weight:400}
+details[open] summary::after{content:"–"}
+details p{padding:0 24px 20px;color:var(--ink-2);font-size:14.5px}
+/* CTA */
+.cta{border-radius:var(--radius-lg);padding:80px 40px;text-align:center;background:
+ radial-gradient(640px 300px at 50% -40%,rgba(66,133,244,.14),transparent 70%),
+ linear-gradient(180deg,#fbfbfa,#f4f6f8);border:1px solid var(--line)}
+.cta h2{font-size:clamp(30px,4vw,48px)}
+.cta p{color:var(--ink-2);margin:18px auto 34px;max-width:560px;font-size:17px}
+/* footer */
+footer{border-top:1px solid var(--line-soft);padding:56px 0 40px;background:var(--bg-warm)}
+.foot{display:flex;justify-content:space-between;gap:40px;flex-wrap:wrap}
+.foot .cols{display:flex;gap:72px;flex-wrap:wrap}
+.foot h4{font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);margin-bottom:14px}
+.foot a{display:block;font-size:14px;color:var(--ink-2);margin:9px 0}
+.foot a:hover{color:var(--ink)}
+.foot-bottom{margin-top:46px;padding-top:24px;border-top:1px solid var(--line-soft);display:flex;justify-content:space-between;font-size:13px;color:var(--ink-3);flex-wrap:wrap;gap:12px}
+.rainbow{height:3px;background:var(--grad);border:none}
+/* icon svgs */
+.ic svg,.sec-card h3 svg,.trustline svg{fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.ic svg{width:21px;height:21px}
+.ic.b svg{stroke:#1a73e8}.ic.p svg{stroke:#9334e6}.ic.g svg{stroke:#188038}.ic.y svg{stroke:#b06000}.ic.r svg{stroke:#c5221f}.ic.t svg{stroke:#007b83}
+.sec-card h3 svg{width:19px;height:19px;stroke:var(--blue);flex:none}
+.trustline svg{width:15px;height:15px;stroke:var(--ink-3)}
+.trustline svg.st{fill:#f2a60c;stroke:none}
+.btn svg{width:16px;height:16px;flex:none}
+/* testimonials */
+.testi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-top:56px}
+.testi-card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:30px 28px;box-shadow:var(--shadow-sm);transition:.2s;position:relative}
+.testi-card:hover{transform:translateY(-4px);box-shadow:var(--shadow-md);border-color:#d8dadd}
+.testi-card .stars{display:flex;gap:3px;margin-bottom:16px}
+.testi-card .stars svg{width:14px;height:14px;fill:#f2a60c;stroke:none}
+.testi-card blockquote{font-size:15px;color:var(--ink-2);line-height:1.65;font-style:italic}
+.testi-card blockquote::before{content:'\201C';font-size:38px;line-height:1;color:var(--blue);font-family:'Sora';font-style:normal;display:block;margin-bottom:4px}
+.testi-who{display:flex;align-items:center;gap:12px;margin-top:22px;border-top:1px solid var(--line-soft);padding-top:18px}
+.testi-av{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#e8f0fe,#f3e8fd);border:1px solid var(--line);display:grid;place-items:center;font-weight:700;font-size:15px;color:var(--blue);flex-shrink:0}
+.testi-who b{font-size:13.5px;display:block;color:var(--ink)}
+.testi-who span{font-size:12px;color:var(--ink-3)}
+@media(max-width:900px){
+ .grid3,.steps,.sec-grid,.price-grid,.testi-grid{grid-template-columns:1fr}
+ .split,.install{grid-template-columns:1fr}
+ .nav-links{display:none}
+}
+</style>
+</head>
+<body>
+<div class="announce"><span class="tag">NEW</span> CoMemor v1.0.7 is live on npm — Memory Console dashboard &amp; hardened security audit <a href="https://www.npmjs.com/package/comemor" target="_blank">Read the release →</a></div>
+<nav><div class="wrap nav-in">
+  <a class="brand" href="#">
+    <span class="logo-mark"><img src="assets/comemor-logo.png" alt="CoMemor logo"></span>
+    CoMemor
+  </a>
+  <div class="nav-links">
+    <a href="#features">Features</a><a href="#how">How it works</a><a href="#demo">Demo</a><a href="#tools">MCP Tools</a>
+    <a href="#security">Security</a><a href="#pricing">Pricing</a><a href="#faq">FAQ</a>
+  </div>
+  <div class="nav-cta">
+    <a class="btn btn-ghost" href="https://github.com/PrasannaSaiS/CoMemor" target="_blank">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+      <span id="gh-stars">Star on GitHub</span></a>
+    <a class="btn btn-dark" href="#install">Get started →</a>
+  </div>
+</div></nav>
+<header class="hero"><div class="wrap">
+  <span class="pill"><span class="dot"></span>Open-source MCP server · GPL-3.0 · Node ≥ 22.5</span>
+  <h1>Your AI agent should<br><span class="type-wrap"><span id="typer">never debug twice.</span><span class="caret"></span></span></h1>
+  <p class="sub">CoMemor gives AI coding agents a <strong>persistent, repository-scoped memory</strong> of engineering failures and their fixes — so past build breaks, type errors and dependency conflicts become instant, verified solutions.</p>
+  <div class="hero-ctas">
+    <a class="btn btn-dark" style="padding:14px 30px;font-size:15.5px" href="#install">Start free with npx →</a>
+    <a class="btn btn-ghost" style="padding:14px 30px;font-size:15.5px" href="https://github.com/PrasannaSaiS/CoMemor" target="_blank">View on GitHub</a>
+  </div>
+  <div class="install-chip mono"><span><span class="dollar">$</span> npx comemor</span><button onclick="copyCmd(this)">Copy</button></div>
+  <div class="trustline">
+    <span><svg viewBox="0 0 24 24"><path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.6 7L12 17.3 5.8 20.9l1.6-7L2 9.2l7.1-.6z"/></svg><span id="gh-stars2">Open source on GitHub</span></span>
+    <span><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="14" x2="23" y2="14"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="14" x2="4" y2="14"/></svg>MCP 1.x compatible</span><span><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Secrets redacted before disk</span><span><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>Never executes commands</span><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>v1.0.7 on npm</span>
+  </div>
+  <!-- Dashboard screenshot — replace src with updated screenshot once new logo is in the dashboard build -->
+  <figure class="shot">
+    <img src="https://github.com/user-attachments/assets/5b9799f5-5c07-48c1-91b3-3a08ae65312f" loading="lazy" alt="CoMemor Memory Console Dashboard — local audit and observability UI">
+  </figure>
+  <div class="shot-cap">The built-in <strong>Memory Console</strong> — local-first audit &amp; observability for everything your agent remembers.</div>
+</div></header>
+<div class="strip"><div class="wrap">
+  <p>Works with the AI coding tools you already use</p>
+  <div class="logos">
+    <span class="lg"><i style="background:#4285f4"></i>Google Antigravity</span>
+    <span class="lg"><i style="background:#d97757"></i>Claude Desktop &amp; Code</span>
+    <span class="lg"><i style="background:#111"></i>Cursor</span>
+    <span class="lg"><i style="background:#0b9d58"></i>Windsurf</span>
+    <span class="lg"><i style="background:#007acc"></i>VS Code + Copilot</span>
+    <span class="lg"><i style="background:#9b72cb"></i>Any MCP host</span>
+  </div>
+</div></div>
+<section class="problem"><div class="wrap split">
+  <div>
+    <span class="kicker">The problem</span>
+    <h2 class="title">Agents keep re-solving problems they already solved.</h2>
+    <p class="lead">Session after session, AI coding agents re-investigate the same build failures, TypeScript errors and dependency conflicts — in the same repository. Every repeated incident burns debugging time, tokens and tool calls that a memory would have saved.</p>
+    <div class="stat-row">
+      <div class="stat"><b>0 ms</b><span>re-investigation on exact fingerprint match</span></div>
+      <div class="stat"><b>100%</b><span>local &amp; repo-scoped — nothing leaves your machine</span></div>
+      <div class="stat"><b>4</b><span>MCP tools, zero config to start</span></div>
+    </div>
+  </div>
+  <div class="quote-card">
+    <span class="mono">&#10007; error TS2307: Cannot find module '@app/core' or its corresponding type declarations.</span>
+    <span class="mono fix">&#10003; find_fix → match 0.97 · fingerprint sha256:ab41…
+Known fix: add "@app/core" path alias to tsconfig.base.json
+Wilson confidence: 0.94 · verified 12× · fresh (lockfile unchanged)</span>
+    <div class="meta"><span>records.jsonl · redacted · safe to commit</span><span>retrieved in &lt;50ms</span></div>
+  </div>
+</div></section>
+<section id="features"><div class="wrap center">
+  <span class="kicker">Capabilities</span>
+  <h2 class="title">Memory that engineers can actually trust.</h2>
+  <p class="lead">Every capability is designed for credibility: append-only truth, statistical confidence, and defense-in-depth before anything touches disk or your agent's context.</p>
+  <div class="grid3" style="text-align:left">
+    <div class="card"><div class="ic b"><svg viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg></div><h3>Persistent memory</h3><p>Append-only JSONL as the source of truth, with a SQLite FTS5 index rebuilt automatically. Durable, inspectable, diff-able — and designed to be committed to your repo.</p></div>
+    <div class="card"><div class="ic p"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div><h3>Fuzzy lexical retrieval</h3><p>Exact SHA-256 fingerprint matching for identical errors plus token-overlap similarity for structurally similar ones, with a configurable confidence threshold.</p></div>
+    <div class="card"><div class="ic r"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div><h3>Secret redaction</h3><p>API keys, tokens and credentials are stripped before anything reaches disk — deterministic regex patterns plus Shannon-entropy analysis across all stored fields.</p></div>
+    <div class="card"><div class="ic y"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div><h3>Poisoning detection</h3><p>7 heuristic detectors flag potential prompt-injection in stored records. Flagged records are quarantined and retrieved content is wrapped in untrusted-data envelopes.</p></div>
+    <div class="card"><div class="ic g"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></div><h3>Wilson-score confidence</h3><p>Every remembered fix carries a statistical confidence interval for its success rate — plus staleness signals from lockfile hashes, normalizer versions and TTL decay.</p></div>
+    <div class="card"><div class="ic t"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div><h3>Memory Console</h3><p>A built-in local dashboard for audit and observability: browse records, quarantines, pending approvals and aggregate stats without leaving your machine.</p></div>
+  </div>
+</div></section>
+<section id="how" class="how"><div class="wrap center">
+  <span class="kicker">How it works</span>
+  <h2 class="title">Fail once. Fix once. Remember forever.</h2>
+  <div class="steps" style="text-align:left">
+    <div class="step"><div class="num">1</div><h3>Agent hits an error</h3><p>Before retrying anything, the agent calls <code>find_fix</code>. CoMemor searches by exact fingerprint or fuzzy lexical match and returns ranked candidates with confidence and staleness signals.</p></div>
+    <div class="step"><div class="num">2</div><h3>Fix is validated, not executed</h3><p><code>verify_fix</code> checks the proposed command against a safety policy — allowlisted binaries, no shell metacharacters, workspace containment — and returns a structured proposal. <strong>CoMemor never executes commands.</strong></p></div>
+    <div class="step"><div class="num">3</div><h3>The repo gets smarter</h3><p>Once a fix is confirmed working, <code>record_failure</code> persists it — secrets redacted — to repo-scoped memory. Next session, the same error resolves instantly instead of being re-investigated.</p></div>
+  </div>
+</div></section>
+<section id="demo"><div class="wrap center">
+  <span class="kicker">See it in action</span>
+  <h2 class="title">Watch a repeated error resolve itself.</h2>
+  <p class="lead">A 90-second walkthrough of CoMemor turning a once-painful build failure into an instant, verified fix.</p>
+  <!--
+  ============================================================
+  DEMO VIDEO PLACEHOLDER — uncomment and replace when ready.
+
+  Recording guidelines:
+  * Length: 60–90 seconds, no intro slides — start inside the IDE.
+  * Script: (1) agent hits a TypeScript/build error, investigates & fixes it,
+    record_failure persists it; (2) new session, same error; (3) find_fix
+    returns the known fix instantly with confidence score; (4) 5s glimpse of
+    the Memory Console dashboard.
+  * Format: 1920x1080 (or 2560x1440) screen capture, MP4 (H.264), <20 MB if
+    self-hosted; add burned-in or <track> captions; no background music needed.
+
+  Self-hosted embed:
+  <video controls preload="metadata" poster="/assets/demo-poster.jpg"
+         style="width:100%;border-radius:28px;border:1px solid var(--line);box-shadow:var(--shadow-md)">
+    <source src="/assets/comemor-demo.mp4" type="video/mp4">
+  </video>
+
+  YouTube embed:
+  <iframe src="https://www.youtube-nocookie.com/embed/VIDEO_ID"
+    style="width:100%;aspect-ratio:16/9;border:0;border-radius:28px" allowfullscreen loading="lazy"></iframe>
+  ============================================================
+  -->
+</div></section>
+<section id="tools"><div class="wrap center">
+  <span class="kicker">MCP Tools</span>
+  <h2 class="title">Four tools. One honest contract.</h2>
+  <p class="lead">Every execution decision remains with your host IDE or agent — <code class="mono" style="font-size:14px">verify_fix</code> always returns <code class="mono" style="font-size:14px">executedByServer: false</code>.</p>
+  <div class="tools-table"><table>
+    <tr><th>Tool</th><th>When to call</th><th>What it actually does</th></tr>
+    <tr><td><code>find_fix</code></td><td>Before retrying any error</td><td>Searches stored records by exact fingerprint or fuzzy lexical match; returns ranked candidates with staleness &amp; confidence signals.</td></tr>
+    <tr><td><code>record_failure</code></td><td>After a fix is confirmed working</td><td>Persists the failure + fix record to JSONL; redacts secrets before writing.</td></tr>
+    <tr><td><code>verify_fix</code></td><td>To validate a proposed fix command</td><td>Checks the command against safety policy and returns a structured proposal — never executes the command.</td></tr>
+    <tr><td><code>list_memory_stats</code></td><td>Periodic status check</td><td>Returns aggregate record count, quarantine count and pending approvals.</td></tr>
+  </table></div>
+</div></section>
+<section id="security" class="how"><div class="wrap">
+  <div class="center"><span class="kicker">Security &amp; trust</span>
+  <h2 class="title" style="margin:0 auto">Paranoid by default.</h2>
+  <p class="lead">Built for teams that read the threat model before the changelog.</p></div>
+  <div class="sec-grid">
+    <div class="sec-card"><h3><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg> Never executes commands <span class="badge-g">GUARANTEED</span></h3><p>All execution decisions remain with the host IDE or agent under its own confirmation mechanism. Every proposal returns <code class="mono" style="font-size:12.5px">requiresHostConfirmation: true</code>.</p></div>
+    <div class="sec-card"><h3><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Redaction before disk <span class="badge-g">DEFAULT ON</span></h3><p>Regex + Shannon-entropy scrubbing runs before persistence, so the redacted <code class="mono" style="font-size:12.5px">records.jsonl</code> is designed to be safe to commit and share with your team.</p></div>
+    <div class="sec-card"><h3><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Quarantine-first retrieval <span class="badge-g">7 DETECTORS</span></h3><p>Heuristic poisoning detection quarantines suspicious records and wraps everything retrieved in untrusted-data envelopes before it reaches your agent's context.</p></div>
+    <div class="sec-card"><h3><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> Local &amp; repo-scoped <span class="badge-g">NO CLOUD</span></h3><p>Memory lives in your repository. No telemetry service, no vendor database, no data leaving your machine. Open source under GPL-3.0 — audit every line.</p></div>
+  </div>
+</div></section>
+<section id="install"><div class="wrap">
+  <div class="install">
+    <div>
+      <span class="kicker" style="color:#8ab4f8">Get started</span>
+      <h2>Running in under 60 seconds.</h2>
+      <p>Requires Node.js ≥ 22.5 (uses the built-in <code class="mono">node:sqlite</code>). Add one entry to your IDE's <code class="mono">mcp.json</code> — or paste the agent setup prompt from the README and let your assistant configure itself.</p>
+      <div style="margin-top:28px;display:flex;gap:12px;flex-wrap:wrap">
+        <a class="btn btn-blue" href="https://www.npmjs.com/package/comemor" target="_blank">View on npm</a>
+        <a class="btn" style="border:1px solid #3a3e45;color:#e8eaed" href="https://github.com/PrasannaSaiS/CoMemor#connecting-to-your-ai-ide" target="_blank">IDE setup guides</a>
+      </div>
+    </div>
+    <div class="term">
+      <div class="bar"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i></div>
+      <pre><span class="c"># Use without installing (recommended)</span>
+<span class="d">$</span> <span class="cmd">npx comemor</span>
+
+<span class="c"># Or add to your MCP config</span>
+<span class="cmd">{ "mcpServers": { "comemor": {
+    "command": "npx",
+    "args": ["comemor"],
+    "cwd": "$&#123;workspaceFolder&#125;" } } }</span></pre>
+    </div>
+  </div>
+</div></section>
+<section id="testimonials" class="how"><div class="wrap center">
+  <span class="kicker">Developers</span>
+  <h2 class="title">What engineers say.</h2>
+  <p class="lead">Real teams. Real projects. Less time re-investigating errors that already have a fix.</p>
+  <div class="testi-grid" style="text-align:left">
+    <!-- Testimonial 1 — Madhumitha B, IDP -->
+    <div class="testi-card">
+      <div class="stars">
+        <svg viewBox="0 0 24 24"><path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.6 7L12 17.3 5.8 20.9l1.6-7L2 9.2l7.1-.6z"/></svg>
+        <svg viewBox="0 0 24 24"><path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.6 7L12 17.3 5.8 20.9l1.6-7L2 9.2l7.1-.6z"/></svg>
+        <svg viewBox="0 0 24 24"><path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.6 7L12 17.3 5.8 20.9l1.6-7L2 9.2l7.1-.6z"/></svg>
+        <svg viewBox="0 0 24 24"><path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.6 7L12 17.3 5.8 20.9l1.6-7L2 9.2l7.1-.6z"/></svg>
+        <svg viewBox="0 0 24 24"><path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.6 7L12 17.3 5.8 20.9l1.6-7L2 9.2l7.1-.6z"/></svg>
+      </div>
+      <blockquote>Honestly didn't realise how many tokens we were burning just re-diagnosing the same module resolution issues until CoMemor surfaced the fix on the first lookup. Our AI sessions feel so much tighter now — it's like the agent actually learned our codebase instead of starting from scratch every time.</blockquote>
+      <div class="testi-who">
+        <div class="testi-av">M</div>
+        <div>
+          <b>Madhumitha B</b>
+          <span>Engineer, IDP</span>
+        </div>
+      </div>
+    </div>
+    <!-- Testimonial 2 — Madan, SVJM Molds -->
+    <div class="testi-card">
+      <div class="stars">
+        <svg viewBox="0 0 24 24"><path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.6 7L12 17.3 5.8 20.9l1.6-7L2 9.2l7.1-.6z"/></svg>
+        <svg viewBox="0 0 24 24"><path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.6 7L12 17.3 5.8 20.9l1.6-7L2 9.2l7.1-.6z"/></svg>
+        <svg viewBox="0 0 24 24"><path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.6 7L12 17.3 5.8 20.9l1.6-7L2 9.2l7.1-.6z"/></svg>
+        <svg viewBox="0 0 24 24"><path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.6 7L12 17.3 5.8 20.9l1.6-7L2 9.2l7.1-.6z"/></svg>
+        <svg viewBox="0 0 24 24"><path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.6 7L12 17.3 5.8 20.9l1.6-7L2 9.2l7.1-.6z"/></svg>
+      </div>
+      <blockquote>We're a small shop — I can't afford to have the AI agent chew through the same dependency conflict three sessions in a row. CoMemor just remembers it, done. Setup took literally two minutes and I haven't looked back. This is the kind of tool that actually reduces your bill at the end of the month.</blockquote>
+      <div class="testi-who">
+        <div class="testi-av">M</div>
+        <div>
+          <b>Madan</b>
+          <span>Developer, SVJM Molds</span>
+        </div>
+      </div>
+    </div>
+    <!-- Testimonial 3 — Manisha, UPS -->
+    <div class="testi-card">
+      <div class="stars">
+        <svg viewBox="0 0 24 24"><path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.6 7L12 17.3 5.8 20.9l1.6-7L2 9.2l7.1-.6z"/></svg>
+        <svg viewBox="0 0 24 24"><path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.6 7L12 17.3 5.8 20.9l1.6-7L2 9.2l7.1-.6z"/></svg>
+        <svg viewBox="0 0 24 24"><path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.6 7L12 17.3 5.8 20.9l1.6-7L2 9.2l7.1-.6z"/></svg>
+        <svg viewBox="0 0 24 24"><path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.6 7L12 17.3 5.8 20.9l1.6-7L2 9.2l7.1-.6z"/></svg>
+        <svg viewBox="0 0 24 24"><path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.6 7L12 17.3 5.8 20.9l1.6-7L2 9.2l7.1-.6z"/></svg>
+      </div>
+      <blockquote>The iteration loop on our internal tooling used to be painful — same TypeScript errors popping up across multiple agent sessions because there's no memory between runs. CoMemor fixed that completely. The agent picks up exactly where the last one left off. It's not flashy, it just works, and that's exactly what you want in enterprise workflows.</blockquote>
+      <div class="testi-who">
+        <div class="testi-av">M</div>
+        <div>
+          <b>Manisha</b>
+          <span>Senior Engineer, UPS</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div></section>
+<section id="pricing"><div class="wrap center">
+  <span class="kicker">Pricing</span>
+  <h2 class="title">Open source now. Honest forever.</h2>
+  <p class="lead">CoMemor is free and GPL-3.0 licensed today. A hosted team tier is on the roadmap — join the waitlist to shape it.</p>
+  <div class="price-grid">
+    <div class="price hl"><span class="tagp">AVAILABLE NOW</span>
+      <h3>Open Source</h3><div class="amt">$0</div><div class="per">forever · GPL-3.0-only</div>
+      <ul><li>Unlimited repositories &amp; records</li><li>All 4 MCP tools + Memory Console</li><li>Secret redaction &amp; poisoning detection</li><li>Local-first — your data never leaves</li><li>Community support on GitHub</li></ul>
+      <a class="btn btn-dark" href="https://github.com/PrasannaSaiS/CoMemor" target="_blank">Get CoMemor free →</a>
+    </div>
+    <div class="price">
+      <h3>Team Cloud</h3><div class="amt">Soon</div><div class="per">shared memory for teams · waitlist open</div>
+      <ul><li>Shared, access-controlled team memory</li><li>Cross-repo fix federation</li><li>SSO, audit exports &amp; retention policies</li><li>Priority support &amp; SLAs</li></ul>
+      <a class="btn btn-ghost" href="https://github.com/PrasannaSaiS/CoMemor/issues" target="_blank">Join the waitlist</a>
+    </div>
+  </div>
+</div></section>
+<section id="faq"><div class="wrap" style="max-width:780px">
+  <div class="center"><span class="kicker">FAQ</span><h2 class="title" style="margin:0 auto">Questions, answered straight.</h2></div>
+  <div style="margin-top:44px">
+    <details open><summary>Does CoMemor ever run commands on my machine?</summary><p>No. <code class="mono">verify_fix</code> only validates a proposed command against a safety policy and returns a structured proposal with <code class="mono">executedByServer: false</code>. Execution always remains with your host IDE or agent, under its own confirmation mechanism.</p></details>
+    <details><summary>Is the retrieval semantic / embedding-based?</summary><p>No — and that's deliberate. Retrieval uses exact SHA-256 fingerprint matching for identical errors and fuzzy lexical token-overlap similarity for structurally similar ones. It's fast, deterministic, local and explainable.</p></details>
+    <details><summary>Is it safe to commit the memory file to my repo?</summary><p>The redacted <code class="mono">records.jsonl</code> is designed to be safe to commit. Redaction (regex + Shannon entropy) is best-effort — novel or custom secret formats may not be caught — so verify contents before committing to a shared repository.</p></details>
+    <details><summary>Which IDEs and agents does it work with?</summary><p>Any MCP 1.x host: Google Antigravity, Claude Desktop and Claude Code, Cursor, Windsurf, VS Code with Copilot, and more. The README includes ready-to-paste config snippets and agent setup prompts for each.</p></details>
+    <details><summary>What do I need to run it?</summary><p>Just Node.js ≥ 22.5.0 (CoMemor uses the built-in <code class="mono">node:sqlite</code> module). Run <code class="mono">npx comemor</code> — no install, no account, no cloud.</p></details>
+    <details><summary>How is prompt-injection in stored memories handled?</summary><p>Seven heuristic detectors scan records before retrieval; anything flagged is quarantined, and all retrieved content is wrapped in untrusted-data envelopes. It's best-effort defense-in-depth, documented honestly as such.</p></details>
+  </div>
+</div></section>
+<section><div class="wrap">
+  <div class="cta">
+    <h2>Give your agent a memory today.</h2>
+    <p>One command. Zero config. Your repository starts learning from every failure it will never repeat.</p>
+    <div class="hero-ctas" style="margin-top:0">
+      <a class="btn btn-dark" style="padding:15px 34px;font-size:16px" href="https://www.npmjs.com/package/comemor" target="_blank">npx comemor →</a>
+      <a class="btn btn-ghost" style="padding:15px 34px;font-size:16px" href="https://github.com/PrasannaSaiS/CoMemor"><svg viewBox="0 0 24 24" class="st" aria-hidden="true"><path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.6 7L12 17.3 5.8 20.9l1.6-7L2 9.2l7.1-.6z"/></svg>Star on GitHub</a>
+    </div>
+  </div>
+</div></section>
+<footer><div class="wrap">
+  <div class="foot">
+    <div style="max-width:300px">
+      <a class="brand" href="#">
+        <span class="logo-mark"><img src="assets/comemor-logo.png" alt="CoMemor logo"></span>
+        CoMemor
+      </a>
+      <p style="font-size:13.5px;color:var(--ink-3);margin-top:14px">Persistent engineering memory for AI coding agents. Stop debugging the same errors twice.</p>
+    </div>
+    <div class="cols">
+      <div><h4>Product</h4><a href="#features">Features</a><a href="#tools">MCP Tools</a><a href="#security">Security</a><a href="#pricing">Pricing</a></div>
+      <div><h4>Resources</h4><a href="https://github.com/PrasannaSaiS/CoMemor" target="_blank">GitHub</a><a href="https://www.npmjs.com/package/comemor" target="_blank">npm package</a><a href="https://github.com/PrasannaSaiS/CoMemor#connecting-to-your-ai-ide" target="_blank">Documentation</a><a href="https://modelcontextprotocol.io" target="_blank">MCP Protocol</a></div>
+      <div><h4>Community</h4><a href="https://github.com/PrasannaSaiS/CoMemor/issues" target="_blank">Issues</a><a href="https://github.com/PrasannaSaiS/CoMemor/pulls" target="_blank">Pull Requests</a><a href="https://github.com/PrasannaSaiS/CoMemor/blob/main/LICENSE" target="_blank">License (GPL-3.0)</a></div>
+    </div>
+  </div>
+  <div class="foot-bottom"><span>&copy; <span id="yr"></span> CoMemor. Open source under GPL-3.0-only.</span><span>Built in the open, for agents that remember.</span></div>
+</div></footer>
+<hr class="rainbow">
+<script>
+// Antigravity-style typing headline
+const phrases=["never debug twice.","remember every fix.","learn your repository.","earn your trust."];
+const el=document.getElementById('typer');let pi=0,ci=phrases[0].length,del=true;
+function tick(){const p=phrases[pi];
+ if(del){ci--;el.textContent=p.slice(0,ci);if(ci===0){del=false;pi=(pi+1)%phrases.length;setTimeout(tick,350);return}setTimeout(tick,34)}
+ else{ci++;el.textContent=phrases[pi].slice(0,ci);if(ci===phrases[pi].length){del=true;setTimeout(tick,2600);return}setTimeout(tick,62)}}
+setTimeout(tick,2200);
+// Live GitHub star count (graceful fallback if rate-limited)
+fetch('https://api.github.com/repos/PrasannaSaiS/CoMemor').then(r=>r.json()).then(d=>{
+ if(d&&d.stargazers_count!=null){
+  document.getElementById('gh-stars').textContent='Star · '+d.stargazers_count;
+  document.getElementById('gh-stars2').textContent=d.stargazers_count+' GitHub stars · open source';}}).catch(()=>{});
+function copyCmd(b){navigator.clipboard.writeText('npx comemor').then(()=>{b.textContent='Copied!';setTimeout(()=>b.textContent='Copy',1500)})}
+document.getElementById('yr').textContent=new Date().getFullYear();
+</script>
+</body>
+</html>

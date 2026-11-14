@@ -281,8 +281,8 @@ function DashboardShell(): ReactNode {
     navigate(`/${screen}`);
   };
 
-  /* Icon src swaps with theme */
-  const mcpIconSrc = theme === 'dark' ? '/mcp-icon-white.png' : '/mcp-icon-black.png';
+  /* CoMemor logo — single image for both themes */
+  const mcpIconSrc = '/comemor-logo.png';
 
   return (
     <div className={`app-container ${sidebarOpen ? 'sidebar-expanded' : 'sidebar-collapsed'}`}>
@@ -302,10 +302,10 @@ function DashboardShell(): ReactNode {
             <div className="brand-icon-box" title="Agent Memory Observability Console">
               <img
                 src={mcpIconSrc}
-                alt="MCP"
-                width={22}
-                height={22}
-                style={{ display: 'block', objectFit: 'contain' }}
+                alt="CoMemor"
+                width={28}
+                height={28}
+                style={{ display: 'block', objectFit: 'contain', borderRadius: '6px' }}
               />
             </div>
             <div className="brand-meta">
