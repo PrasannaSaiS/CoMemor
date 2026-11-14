@@ -179,19 +179,13 @@ footer{border-top:1px solid var(--line-soft);padding:56px 0 40px;background:var(
 .trustline svg.st{fill:#f2a60c;stroke:none}
 .btn svg{width:16px;height:16px;flex:none}
 /* testimonials */
-.testi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-top:56px}
-.testi-card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:30px 28px;box-shadow:var(--shadow-sm);transition:.2s;position:relative}
-.testi-card:hover{transform:translateY(-4px);box-shadow:var(--shadow-md);border-color:#d8dadd}
-.testi-card .stars{display:flex;gap:3px;margin-bottom:16px}
-.testi-card .stars svg{width:14px;height:14px;fill:#f2a60c;stroke:none}
-.testi-card blockquote{font-size:15px;color:var(--ink-2);line-height:1.65;font-style:italic}
-.testi-card blockquote::before{content:'\201C';font-size:38px;line-height:1;color:var(--blue);font-family:'Sora';font-style:normal;display:block;margin-bottom:4px}
-.testi-who{display:flex;align-items:center;gap:12px;margin-top:22px;border-top:1px solid var(--line-soft);padding-top:18px}
-.testi-av{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#e8f0fe,#f3e8fd);border:1px solid var(--line);display:grid;place-items:center;font-weight:700;font-size:15px;color:var(--blue);flex-shrink:0}
-.testi-who b{font-size:13.5px;display:block;color:var(--ink)}
-.testi-who span{font-size:12px;color:var(--ink-3)}
+.quote-ph{border:2px dashed #c9ccd1;background:var(--bg-soft);box-shadow:none}
+.quote-ph .who{display:flex;align-items:center;gap:12px;margin-top:18px}
+.quote-ph .av{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#e8f0fe,#f3e8fd);border:1px solid var(--line)}
+.quote-ph .who b{font-size:13.5px;display:block}
+.quote-ph .who span{font-size:12px;color:var(--ink-3)}
 @media(max-width:900px){
- .grid3,.steps,.sec-grid,.price-grid,.testi-grid{grid-template-columns:1fr}
+ .grid3,.steps,.sec-grid,.price-grid{grid-template-columns:1fr}
  .split,.install{grid-template-columns:1fr}
  .nav-links{display:none}
 }
@@ -205,7 +199,7 @@ footer{border-top:1px solid var(--line-soft);padding:56px 0 40px;background:var(
     CoMemor
   </a>
   <div class="nav-links">
-    <a href="#features">Features</a><a href="#how">How it works</a><a href="#demo">Demo</a><a href="#tools">MCP Tools</a>
+    <a href="#features">Features</a><a href="#how">How it works</a><a href="#tools">MCP Tools</a>
     <a href="#security">Security</a><a href="#pricing">Pricing</a><a href="#faq">FAQ</a>
   </div>
   <div class="nav-cta">
@@ -286,13 +280,13 @@ Wilson confidence: 0.94 · verified 12× · fresh (lockfile unchanged)</span>
     <div class="step"><div class="num">3</div><h3>The repo gets smarter</h3><p>Once a fix is confirmed working, <code>record_failure</code> persists it — secrets redacted — to repo-scoped memory. Next session, the same error resolves instantly instead of being re-investigated.</p></div>
   </div>
 </div></section>
+<!--
+DEMO SECTION — restore when video is ready
+============================================================
 <section id="demo"><div class="wrap center">
   <span class="kicker">See it in action</span>
   <h2 class="title">Watch a repeated error resolve itself.</h2>
   <p class="lead">A 90-second walkthrough of CoMemor turning a once-painful build failure into an instant, verified fix.</p>
-  <!--
-  ============================================================
-  DEMO VIDEO PLACEHOLDER — uncomment and replace when ready.
 
   Recording guidelines:
   * Length: 60–90 seconds, no intro slides — start inside the IDE.
@@ -312,9 +306,9 @@ Wilson confidence: 0.94 · verified 12× · fresh (lockfile unchanged)</span>
   YouTube embed:
   <iframe src="https://www.youtube-nocookie.com/embed/VIDEO_ID"
     style="width:100%;aspect-ratio:16/9;border:0;border-radius:28px" allowfullscreen loading="lazy"></iframe>
-  ============================================================
-  -->
 </div></section>
+============================================================
+-->
 <section id="tools"><div class="wrap center">
   <span class="kicker">MCP Tools</span>
   <h2 class="title">Four tools. One honest contract.</h2>
@@ -366,61 +360,10 @@ Wilson confidence: 0.94 · verified 12× · fresh (lockfile unchanged)</span>
   <span class="kicker">Developers</span>
   <h2 class="title">What engineers say.</h2>
   <p class="lead">Real teams. Real projects. Less time re-investigating errors that already have a fix.</p>
-  <div class="testi-grid" style="text-align:left">
-    <!-- Testimonial 1 — Madhumitha B, IDP -->
-    <div class="testi-card">
-      <div class="stars">
-        <svg viewBox="0 0 24 24"><path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.6 7L12 17.3 5.8 20.9l1.6-7L2 9.2l7.1-.6z"/></svg>
-        <svg viewBox="0 0 24 24"><path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.6 7L12 17.3 5.8 20.9l1.6-7L2 9.2l7.1-.6z"/></svg>
-        <svg viewBox="0 0 24 24"><path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.6 7L12 17.3 5.8 20.9l1.6-7L2 9.2l7.1-.6z"/></svg>
-        <svg viewBox="0 0 24 24"><path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.6 7L12 17.3 5.8 20.9l1.6-7L2 9.2l7.1-.6z"/></svg>
-        <svg viewBox="0 0 24 24"><path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.6 7L12 17.3 5.8 20.9l1.6-7L2 9.2l7.1-.6z"/></svg>
-      </div>
-      <blockquote>Honestly didn't realise how many tokens we were burning just re-diagnosing the same module resolution issues until CoMemor surfaced the fix on the first lookup. Our AI sessions feel so much tighter now — it's like the agent actually learned our codebase instead of starting from scratch every time.</blockquote>
-      <div class="testi-who">
-        <div class="testi-av">M</div>
-        <div>
-          <b>Madhumitha B</b>
-          <span>Engineer, IDP</span>
-        </div>
-      </div>
-    </div>
-    <!-- Testimonial 2 — Madan, SVJM Molds -->
-    <div class="testi-card">
-      <div class="stars">
-        <svg viewBox="0 0 24 24"><path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.6 7L12 17.3 5.8 20.9l1.6-7L2 9.2l7.1-.6z"/></svg>
-        <svg viewBox="0 0 24 24"><path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.6 7L12 17.3 5.8 20.9l1.6-7L2 9.2l7.1-.6z"/></svg>
-        <svg viewBox="0 0 24 24"><path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.6 7L12 17.3 5.8 20.9l1.6-7L2 9.2l7.1-.6z"/></svg>
-        <svg viewBox="0 0 24 24"><path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.6 7L12 17.3 5.8 20.9l1.6-7L2 9.2l7.1-.6z"/></svg>
-        <svg viewBox="0 0 24 24"><path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.6 7L12 17.3 5.8 20.9l1.6-7L2 9.2l7.1-.6z"/></svg>
-      </div>
-      <blockquote>We're a small shop — I can't afford to have the AI agent chew through the same dependency conflict three sessions in a row. CoMemor just remembers it, done. Setup took literally two minutes and I haven't looked back. This is the kind of tool that actually reduces your bill at the end of the month.</blockquote>
-      <div class="testi-who">
-        <div class="testi-av">M</div>
-        <div>
-          <b>Madan</b>
-          <span>Developer, SVJM Molds</span>
-        </div>
-      </div>
-    </div>
-    <!-- Testimonial 3 — Manisha, UPS -->
-    <div class="testi-card">
-      <div class="stars">
-        <svg viewBox="0 0 24 24"><path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.6 7L12 17.3 5.8 20.9l1.6-7L2 9.2l7.1-.6z"/></svg>
-        <svg viewBox="0 0 24 24"><path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.6 7L12 17.3 5.8 20.9l1.6-7L2 9.2l7.1-.6z"/></svg>
-        <svg viewBox="0 0 24 24"><path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.6 7L12 17.3 5.8 20.9l1.6-7L2 9.2l7.1-.6z"/></svg>
-        <svg viewBox="0 0 24 24"><path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.6 7L12 17.3 5.8 20.9l1.6-7L2 9.2l7.1-.6z"/></svg>
-        <svg viewBox="0 0 24 24"><path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.6 7L12 17.3 5.8 20.9l1.6-7L2 9.2l7.1-.6z"/></svg>
-      </div>
-      <blockquote>The iteration loop on our internal tooling used to be painful — same TypeScript errors popping up across multiple agent sessions because there's no memory between runs. CoMemor fixed that completely. The agent picks up exactly where the last one left off. It's not flashy, it just works, and that's exactly what you want in enterprise workflows.</blockquote>
-      <div class="testi-who">
-        <div class="testi-av">M</div>
-        <div>
-          <b>Manisha</b>
-          <span>Senior Engineer, UPS</span>
-        </div>
-      </div>
-    </div>
+  <div class="grid3" style="text-align:left">
+    <div class="card quote-ph"><p style="font-size:15px;color:var(--ink-2)">&ldquo;Didn't realise how many tokens we burned re-diagnosing the same module resolution issues until CoMemor surfaced the fix on the first lookup. Our AI sessions feel so much tighter — it's like the agent actually learned our codebase.&rdquo;</p><div class="who"><span class="av"></span><div><b>Madhumitha B</b><span>IDP</span></div></div></div>
+    <div class="card quote-ph"><p style="font-size:15px;color:var(--ink-2)">&ldquo;We're a small shop — I can't afford the agent chewing through the same dependency conflict three sessions in a row. CoMemor just remembers it. Setup took literally two minutes and I haven't looked back. This is the kind of tool that actually reduces your bill.&rdquo;</p><div class="who"><span class="av"></span><div><b>Madan</b><span>SVJM Molds</span></div></div></div>
+    <div class="card quote-ph"><p style="font-size:15px;color:var(--ink-2)">&ldquo;The iteration loop on our internal tooling used to be painful — same TypeScript errors popping up across multiple agent sessions. CoMemor fixed that completely. The agent picks up exactly where the last one left off. It just works, and that's what you want in enterprise workflows.&rdquo;</p><div class="who"><span class="av"></span><div><b>Manisha</b><span>UPS</span></div></div></div>
   </div>
 </div></section>
 <section id="pricing"><div class="wrap center">
